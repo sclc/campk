@@ -891,6 +891,18 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
 
     bool recursiveChecker=false;
 
+#ifdef CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_DUP_CHECK
+    long * actualMemLenghZone = (long*)calloc( compactedCSR.num_cols,sizeof(long));
+    int maxduplicat=0;
+    for (idx=0; idx<numRemoteVec;idx++)
+    {
+        actualMemLenghZone[vec_remote_recv_idx[idx]] +=1;
+        maxduplicat = maxduplicat < actualMemLenghZone[vec_remote_recv_idx[idx]] ? actualMemLenghZone[vec_remote_recv_idx[idx]] : maxduplicat;
+    } 
+    printf ("myid=%d, duplicatedlength:%d \n",myid,maxduplicat);
+    free (actualMemLenghZone);
+#endif
+
     for (idx=0; idx<numRemoteVec;idx++)
     {
         if (remoteValResultRecoder.find (vec_remote_recv_idx[idx]) == remoteValResultRecoder.end())
@@ -899,6 +911,16 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
         }
         assert (remoteValResultRecoder[vec_remote_recv_idx[idx]].size() == 1);
     }
+
+    // for (idx=0; idx<numRemoteVec;idx++)
+    // {
+    //     remoteValResultRecoder[vec_remote_recv_idx[idx]].push_back(buffer_vec_remote_recv[idx]);   
+    //     if (remoteValResultRecoder[vec_remote_recv_idx[idx]].size() > 1)
+    //     {
+    //         remoteValResultRecoder[vec_remote_recv_idx[idx]].pop_back();
+    //     }
+    //     assert (remoteValResultRecoder[vec_remote_recv_idx[idx]].size() == 1);
+    // }
 
 #ifdef CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_OMP_1
 #pragma omp parallel num_threads (8)
