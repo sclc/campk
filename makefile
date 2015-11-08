@@ -6,7 +6,7 @@ CXX= mpic++
 # FC="mpifrtpx" 
 CPPFLAGS = 
 CFLAGS= -O -Wall
-CXXFLAGS= -O -O2 -Wall
+CXXFLAGS= -O -O2 -Wall 
 ########k-computer
 #CXX ?= mpiFCCpx
 # CC = mpifccpx
@@ -14,10 +14,10 @@ CXXFLAGS= -O -O2 -Wall
 # FC="mpifrtpx" 
 #CPPFLAGS = -I/opt/klocal/include
 #CFLAGS=-Xg -O2 -KPIC -O -Wall
-#FCFLAGS=-X9 -O2 -KPIC -O
+#FCFLAGS=-X9 -O2 -KPIC -O -fopenmp
 #CXXFLAGS= -Xg -O2 -KPIC -O -Wall
 
-
+LDFLAGS = -fopenmp
 # LDFLAGS = -Wl,-rpath,/opt/klocal/lib -Wl,-rpath,/opt/klocal/lib \
 # -L/opt/klocal/lib  -lpetsc -SCALAPACK -SSL2 -lpthread -ltrtmetcpp \
 # -Wl,-rpath,/opt/FJSVpxtof/sparc64fx/lib64 -L/opt/FJSVpxtof/sparc64fx/lib64 \

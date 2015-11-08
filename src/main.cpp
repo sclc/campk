@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
+#include <omp.h>
 #ifndef MPI_HEADERS
 #include <mpi.h>
 #define MPI_HEADERS
@@ -39,6 +39,13 @@ int main(int argc, char* argv[]) {
     char * string_num_cols;
     char * str_sVal;
 
+// #pragma omp parallel
+// {
+//     omp_set_num_threads (2);
+//     int ompnum = omp_get_num_threads();
+//     int ompid = omp_get_thread_num();
+//     printf ("total:%d, I am: %d\n", ompnum, ompid);
+// }
 #ifdef PROF_ALL
     double t1, t2, t_past_local, t_past_global;
 #endif
@@ -62,9 +69,21 @@ int main(int argc, char* argv[]) {
     int ierr;
 
 
-    ierr = MPI_Init(&argc, &argv);
+    // ierr = MPI_Init(&argc, &argv);
+    int hybridProvided;
+    printf ("MPI_THREAD_MULTIPLE:%d, MPI_THREAD_FUNNELED:%d, MPI_THREAD_SERIALIZED:%d \n", MPI_THREAD_MULTIPLE, MPI_THREAD_FUNNELED, MPI_THREAD_SERIALIZED);
+    ierr = MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &hybridProvided);
     ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);   
     ierr = MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+
+    printf ("myid:%d, I want:%d, I got:%d \n", myid, MPI_THREAD_MULTIPLE, hybridProvided);
+    #pragma omp parallel
+{
+    omp_set_num_threads (4);
+    int ompnum = omp_get_num_threads();
+    int ompid = omp_get_thread_num();
+    printf ("total:%d, I am: %d\n", ompnum, ompid);
+}
 
     if (myid == 0) {
 

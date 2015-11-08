@@ -2,8 +2,8 @@
 #include "campk.h"
 
 
-void campk_v1(denseType X, denseType &AkX , int kval \
-                 , matInfo * mat_info, int myid, int numprocs \
+void campk_v1(denseType X, denseType &AkX , int kval 
+                 , matInfo * mat_info, int myid, int numprocs 
                  , char* path, char* mtx_filename)
 {
     cooType globalMat;
@@ -69,13 +69,13 @@ void campk_v1(denseType X, denseType &AkX , int kval \
     }
 
     // boardcast rowIdx
-    ierr = MPI_Bcast((void *) entireCsrMat.row_start, (entireCsrMat.num_rows+1), \
+    ierr = MPI_Bcast((void *) entireCsrMat.row_start, (entireCsrMat.num_rows+1), 
                       MPI_LONG, 0, MPI_COMM_WORLD);
     // boardcast colIdx
-    ierr = MPI_Bcast((void *) entireCsrMat.col_idx, entireCsrMat.nnz, \
+    ierr = MPI_Bcast((void *) entireCsrMat.col_idx, entireCsrMat.nnz, 
                       MPI_LONG, 0, MPI_COMM_WORLD);
     // boardcast data
-    ierr = MPI_Bcast((void *) entireCsrMat.csrdata, entireCsrMat.nnz, \
+    ierr = MPI_Bcast((void *) entireCsrMat.csrdata, entireCsrMat.nnz, 
                       MPI_LONG, 0, MPI_COMM_WORLD);    
 
     averageNumRowPerProc = (long)(entireCsrMat.num_rows / numprocs);
@@ -175,9 +175,9 @@ void campk_v1(denseType X, denseType &AkX , int kval \
     t1 = MPI_Wtime();
 #endif
 ////////////////////////////////////// actual code start
-    numRemoteVec = campk_comm_overlaping_local_computation_v1 (compactedCSR, dependencyRecoder, buffer_vec_remote_recv \
-                                                             , k_level_locally_computable_flags, k_level_result, vec_result_length \
-                                                             , myNumRow, myRowStart, myRowEnd, averageNumRowPerProc, vec_remote_recv_idx \
+    numRemoteVec = campk_comm_overlaping_local_computation_v1 (compactedCSR, dependencyRecoder, buffer_vec_remote_recv 
+                                                             , k_level_locally_computable_flags, k_level_result, vec_result_length 
+                                                             , myNumRow, myRowStart, myRowEnd, averageNumRowPerProc, vec_remote_recv_idx 
                                                              , myid, numprocs);
 ///////////////////////////////////// actual code done
 #ifdef CAMPK_PROF_COMM_COMPUT
@@ -203,8 +203,8 @@ void campk_v1(denseType X, denseType &AkX , int kval \
 ////////////////////////////////////// actual code start
     // wait for communicaiton done
     // when communication finished, computate locally incomputable items
-    campk_after_comm_computation_v2 (compactedCSR, k_level_result, k_level_locally_computable_flags \
-                                , vec_result_length, myNumRow, myRowStart, myRowEnd, vec_remote_recv_idx, buffer_vec_remote_recv \
+    campk_after_comm_computation_v2 (compactedCSR, k_level_result, k_level_locally_computable_flags 
+                                , vec_result_length, myNumRow, myRowStart, myRowEnd, vec_remote_recv_idx, buffer_vec_remote_recv 
                                 , numRemoteVec, myid, numprocs);
 ///////////////////////////////////// actual code done
 #ifdef CAMPK_PROF_AFTER_COMM_COMPUT
@@ -236,8 +236,8 @@ void campk_v1(denseType X, denseType &AkX , int kval \
 // compute data in dependencyRecoder and k_level_locally_computable_flags
 // #define MEM_USAGE_1
 // #define MEM_USAGE_2
-void campk_local_dependecy_BFS_v1 (csrType_local entireCsrMat, std::map<long, std::vector<int> > &dependencyRecoder \
-                                 , long myNumRow, long myRowStart, long myRowEnd, short * k_level_locally_computable_flags, int kval \
+void campk_local_dependecy_BFS_v1 (csrType_local entireCsrMat, std::map<long, std::vector<int> > &dependencyRecoder 
+                                 , long myNumRow, long myRowStart, long myRowEnd, short * k_level_locally_computable_flags, int kval 
                                  , int myid, int numprocs)
 {
     // 0: irrevelent; 1: revelent; 2: last level
@@ -338,8 +338,8 @@ void campk_local_dependecy_BFS_v1 (csrType_local entireCsrMat, std::map<long, st
                                         entireCsrMat.col_idx[eleIdx] - myRowStart;
                 // The first condition can be removed for matrix that has no zero diagonal items
                 // , 
-                if (k_level_locally_computable_flags[result_ptr_last] < (idx -1) || \ 
-                    entireCsrMat.col_idx[eleIdx] < myRowStart || \
+                if (k_level_locally_computable_flags[result_ptr_last] < (idx -1) || \
+                    entireCsrMat.col_idx[eleIdx] < myRowStart || 
                     entireCsrMat.col_idx[eleIdx] >  myRowEnd)
                 {
                     computable_flag = 0;
@@ -358,12 +358,12 @@ void campk_local_dependecy_BFS_v1 (csrType_local entireCsrMat, std::map<long, st
             // locally computable
             if (computable_flag)
             {
-                    k_level_locally_computable_flags[result_ptr_this] = \
+                    k_level_locally_computable_flags[result_ptr_this] = 
                     k_level_locally_computable_flags[result_ptr_last]+1;
             }
             else
             {
-                k_level_locally_computable_flags[result_ptr_this] = \
+                k_level_locally_computable_flags[result_ptr_this] = 
                 k_level_locally_computable_flags[result_ptr_last] ;
             }
 
@@ -378,8 +378,8 @@ void campk_local_dependecy_BFS_v1 (csrType_local entireCsrMat, std::map<long, st
 }
 
 ////
-void campk_local_dependecy_BFS_v2 (csrType_local entireCsrMat, std::map<long, std::vector<int> > &dependencyRecoder \
-                                 , long myNumRow, long myRowStart, long myRowEnd, short * k_level_locally_computable_flags, int kval \
+void campk_local_dependecy_BFS_v2 (csrType_local entireCsrMat, std::map<long, std::vector<int> > &dependencyRecoder 
+                                 , long myNumRow, long myRowStart, long myRowEnd, short * k_level_locally_computable_flags, int kval 
                                  , int myid, int numprocs)
 {
     // 0: irrevelent; 1: revelent; 2: last level
@@ -479,12 +479,12 @@ void campk_local_dependecy_BFS_v2 (csrType_local entireCsrMat, std::map<long, st
 
             for (eleIdx = eleStartIdx; eleIdx<eleEndIdx; eleIdx++)
             { 
-                result_ptr_last_offset = (idx - 1) * k_level_result_lda + \
+                result_ptr_last_offset = (idx - 1) * k_level_result_lda + 
                                         entireCsrMat.col_idx[eleIdx] - myRowStart;
                 // The first condition can be removed for matrix that has no zero diagonal items
                 // , 
-                if (k_level_locally_computable_flags[result_ptr_last] < (idx -1) || \ 
-                    entireCsrMat.col_idx[eleIdx] < myRowStart || \
+                if (k_level_locally_computable_flags[result_ptr_last] < (idx -1) || 
+                    entireCsrMat.col_idx[eleIdx] < myRowStart || 
                     entireCsrMat.col_idx[eleIdx] >  myRowEnd)
                 {
                     computable_flag = 0;
@@ -503,12 +503,12 @@ void campk_local_dependecy_BFS_v2 (csrType_local entireCsrMat, std::map<long, st
             // locally computable
             if (computable_flag)
             {
-                    k_level_locally_computable_flags[result_ptr_this] = \
+                    k_level_locally_computable_flags[result_ptr_this] = 
                     k_level_locally_computable_flags[result_ptr_last]+1;
             }
             else
             {
-                k_level_locally_computable_flags[result_ptr_this] = \
+                k_level_locally_computable_flags[result_ptr_this] = 
                 k_level_locally_computable_flags[result_ptr_last] ;
             }
 
@@ -523,7 +523,7 @@ void campk_local_dependecy_BFS_v2 (csrType_local entireCsrMat, std::map<long, st
 }
 //
 // compute data in compactedCSR
-void campk_compacting_csr_v1 (csrType_local_var &compactedCSR, std::map<long, std::vector<int> > dependencyRecoder \
+void campk_compacting_csr_v1 (csrType_local_var &compactedCSR, std::map<long, std::vector<int> > dependencyRecoder 
                            , csrType_local entireCsrMat, int myid, int numprocs)
 {
     // compacting local CSR
@@ -535,7 +535,7 @@ void campk_compacting_csr_v1 (csrType_local_var &compactedCSR, std::map<long, st
     long rowIdxTemp;
     long eleStartIdx, eleEndIdx, eleIdx;
 
-    for (mapIterIdx = dependencyRecoder.begin(); mapIterIdx!=dependencyRecoder.end(); \
+    for (mapIterIdx = dependencyRecoder.begin(); mapIterIdx!=dependencyRecoder.end(); 
          ++mapIterIdx)
     {
         // assume k > 1, here
@@ -572,9 +572,9 @@ void campk_compacting_csr_v1 (csrType_local_var &compactedCSR, std::map<long, st
 // set up values in  vec_remote_recv_idx, numRemoteVec
 // #define DB_COMM_LOCAL_COMP_V1
 
-int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, std::map<long, std::vector<int> > dependencyRecoder \
-                                               , double *& buffer_vec_remote_recv, short  *k_level_locally_computable_flags \
-                                               , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd \
+int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, std::map<long, std::vector<int> > dependencyRecoder 
+                                               , double *& buffer_vec_remote_recv, short  *k_level_locally_computable_flags 
+                                               , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd 
                                                , long averageNumRowPerProc, long *& vec_remote_recv_idx, int myid, int numprocs)
 {
     //all dependencyRecoder.first are necessary elements of x to compute A^kx, .., A^1x
@@ -654,7 +654,7 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
 
             // some redundant, may use map<key,val> to remove this 
             //, optimize this part later on
-            vec_remote_recv_idx[ptrRemoteVec[procPtr] + tempRemoteVecCount[procPtr] ] = \
+            vec_remote_recv_idx[ptrRemoteVec[procPtr] + tempRemoteVecCount[procPtr] ] = 
                                 rowIdxRemoteChecking;
             tempRemoteVecCount[procPtr]++;
         }
@@ -689,10 +689,10 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
     // to tell each process which idx I need
     // , in bcbcg solver, this will only be applied once
     // , so it does not matter wether it is syn or asyn
-    ierr =  MPI_Alltoallv((void *) vec_remote_recv_idx, (int*) remoteVecCount, \
-                            (int*) ptrRemoteVec, MPI_LONG, \
-                          (void *) vec_remote_sending_idx, (int*) sendingCount, \
-                            (int*) sendingBufferPtr,  MPI_LONG, \
+    ierr =  MPI_Alltoallv((void *) vec_remote_recv_idx, (int*) remoteVecCount, 
+                            (int*) ptrRemoteVec, MPI_LONG, 
+                          (void *) vec_remote_sending_idx, (int*) sendingCount, 
+                            (int*) sendingBufferPtr,  MPI_LONG, 
                             MPI_COMM_WORLD);
 
     // to prepare buffer_vec_remote_sending for sending
@@ -714,10 +714,10 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
     // , then do asynchronous p2p send recv
     //based on matrix sparsity patterns, a dozens of send-recev may be called
     // , and I am wondering how the performance will be in such cases
-    ierr =  MPI_Alltoallv((void *) buffer_vec_remote_sending, (int*) sendingCount, \
-                            (int*) sendingBufferPtr, MPI_DOUBLE, \
-                          (void *) buffer_vec_remote_recv, (int*) remoteVecCount, \
-                            (int*) ptrRemoteVec, MPI_DOUBLE, \
+    ierr =  MPI_Alltoallv((void *) buffer_vec_remote_sending, (int*) sendingCount, 
+                            (int*) sendingBufferPtr, MPI_DOUBLE, 
+                          (void *) buffer_vec_remote_recv, (int*) remoteVecCount, 
+                            (int*) ptrRemoteVec, MPI_DOUBLE, 
                             MPI_COMM_WORLD);
 
 
@@ -741,8 +741,8 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
             for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
             {
                 locally_computable_col_idx = compactedCSR.col_idx[idx];
-                last_result_val = k_level_result[ (my_level - 1)* myNumRow + \
-                                                    locally_computable_col_idx - \
+                last_result_val = k_level_result[ (my_level - 1)* myNumRow + 
+                                                    locally_computable_col_idx - 
                                                     myRowStart];
                 k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
             }
@@ -762,8 +762,8 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
     return numRemoteVec;
 }
 
-void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags \
-                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx \
+void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int myid, int numprocs)
 {
 
@@ -820,8 +820,8 @@ void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_
     t1 = MPI_Wtime();
 #endif
 //////////////////////////////////// actural code starts
-                recursiveChecker = RecursiveDependentEleComputation(remoteValResultRecoder, compactedCSR, \
-                            locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,\
+                recursiveChecker = RecursiveDependentEleComputation(remoteValResultRecoder, compactedCSR, 
+                            locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,
                             myid, numprocs );
 //////////////////////////////////// actural code ends
 #ifdef CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_1
@@ -832,8 +832,8 @@ void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_
                 {
                     if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
                     {
-                        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + \
-                                                    locally_incomputable_col_idx - \
+                        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+                                                    locally_incomputable_col_idx - 
                                                     myRowStart];
                     }
                     else
@@ -864,8 +864,8 @@ void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_
 }
 
 /////////////////////////////////////////////////////////////
-void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags \
-                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx \
+void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int myid, int numprocs)
 {
 
@@ -949,8 +949,8 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
     t1 = MPI_Wtime();
 #endif
 //////////////////////////////////// actural code starts
-                recursiveChecker = RecursiveDependentEleComputation(remoteValResultRecoder, compactedCSR, \
-                            locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,\
+                recursiveChecker = RecursiveDependentEleComputation(remoteValResultRecoder, compactedCSR, 
+                            locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,
                             myid, numprocs );
 //////////////////////////////////// actural code ends
 #ifdef CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_1
@@ -961,8 +961,8 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
                 {
                     if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
                     {
-                        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + \
-                                                    locally_incomputable_col_idx - \
+                        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+                                                    locally_incomputable_col_idx - 
                                                     myRowStart];
                     }
                     else
@@ -1023,8 +1023,8 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
 // #define DB_MPK_1_12_3
 
 
-void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localMat, int k, matInfo * mat_info \
-                                  , int myid, int numprocs \
+void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localMat, int k, matInfo * mat_info 
+                                  , int myid, int numprocs 
                                   , char* path, char* mtx_filename) 
 {
     cooType globalMat;
@@ -1115,7 +1115,7 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
 
 #ifdef DB_MPK_1_2
         if (myid==numprocs -2)
-            printf ("myid:%d, num_rows:%ld, num_cols:%ld, nnz:%ld\n",\
+            printf ("myid:%d, num_rows:%ld, num_cols:%ld, nnz:%ld\n",
                      myid, infoMat[0], infoMat[1], infoMat[2]);
         exit(1);
 #endif
@@ -1137,13 +1137,13 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
     }
 
     // boardcast rowIdx
-    ierr = MPI_Bcast((void *) entireCsrMat.row_start, (entireCsrMat.num_rows+1), \
+    ierr = MPI_Bcast((void *) entireCsrMat.row_start, (entireCsrMat.num_rows+1), 
                       MPI_LONG, 0, MPI_COMM_WORLD);
     // boardcast colIdx
-    ierr = MPI_Bcast((void *) entireCsrMat.col_idx, entireCsrMat.nnz, \
+    ierr = MPI_Bcast((void *) entireCsrMat.col_idx, entireCsrMat.nnz, 
                       MPI_LONG, 0, MPI_COMM_WORLD);
     // boardcast data
-    ierr = MPI_Bcast((void *) entireCsrMat.csrdata, entireCsrMat.nnz, \
+    ierr = MPI_Bcast((void *) entireCsrMat.csrdata, entireCsrMat.nnz, 
                       MPI_LONG, 0, MPI_COMM_WORLD);    
 #ifdef DB_MPK_1_3
     if (myid == numprocs -1)
@@ -1308,8 +1308,8 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
                                         entireCsrMat.col_idx[eleIdx] - myRowStart;
                 // The first condition can be removed for matrix that has no zero diagonal items
                 // , 
-                if (k_level_locally_computable_flags[result_ptr_last] < (idx -1) || \ 
-                    entireCsrMat.col_idx[eleIdx] < myRowStart || \
+                if (k_level_locally_computable_flags[result_ptr_last] < (idx -1) || 
+                    entireCsrMat.col_idx[eleIdx] < myRowStart || 
                     entireCsrMat.col_idx[eleIdx] >  myRowEnd)
                 {
                     computable_flag = 0;
@@ -1338,12 +1338,12 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
             // locally computable
             if (computable_flag)
             {
-                    k_level_locally_computable_flags[result_ptr_this] = \
+                    k_level_locally_computable_flags[result_ptr_this] = 
                     k_level_locally_computable_flags[result_ptr_last]+1;
             }
             else
             {
-                k_level_locally_computable_flags[result_ptr_this] = \
+                k_level_locally_computable_flags[result_ptr_this] = 
                 k_level_locally_computable_flags[result_ptr_last] ;
             }
 
@@ -1374,7 +1374,7 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
     std::map<long, std::vector<int> > ::iterator mapIterIdx;
     long rowIdxTemp;
 
-    for (mapIterIdx = dependencyRecoder.begin(); mapIterIdx!=dependencyRecoder.end(); \
+    for (mapIterIdx = dependencyRecoder.begin(); mapIterIdx!=dependencyRecoder.end(); 
          ++mapIterIdx)
     {
         // assume k > 1, here
@@ -1489,7 +1489,7 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
 
             // some redundant, may use map<key,val> to remove this 
             //, optimize this part later on
-            vec_remote_recv_idx[ptrRemoteVec[procPtr] + tempRemoteVecCount[procPtr] ] = \
+            vec_remote_recv_idx[ptrRemoteVec[procPtr] + tempRemoteVecCount[procPtr] ] = 
                                 rowIdxRemoteChecking;
             tempRemoteVecCount[procPtr]++;
         }
@@ -1524,10 +1524,10 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
     // to tell each process which idx I need
     // , in bcbcg solver, this will only be applied once
     // , so it does not matter wether it is syn or asyn
-    ierr =  MPI_Alltoallv((void *) vec_remote_recv_idx, (int*) remoteVecCount, \
-                            (int*) ptrRemoteVec, MPI_LONG, \
-                          (void *) vec_remote_sending_idx, (int*) sendingCount, \
-                            (int*) sendingBufferPtr,  MPI_LONG, \
+    ierr =  MPI_Alltoallv((void *) vec_remote_recv_idx, (int*) remoteVecCount, 
+                            (int*) ptrRemoteVec, MPI_LONG, 
+                          (void *) vec_remote_sending_idx, (int*) sendingCount, 
+                            (int*) sendingBufferPtr,  MPI_LONG, 
                             MPI_COMM_WORLD);
 
     // to prepare buffer_vec_remote_sending for sending
@@ -1549,10 +1549,10 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
     // , then do asynchronous p2p send recv
     //based on matrix sparsity patterns, a dozens of send-recev may be called
     // , and I am wondering how the performance will be in such cases
-    ierr =  MPI_Alltoallv((void *) buffer_vec_remote_sending, (int*) sendingCount, \
-                            (int*) sendingBufferPtr, MPI_DOUBLE, \
-                          (void *) buffer_vec_remote_recv, (int*) remoteVecCount, \
-                            (int*) ptrRemoteVec, MPI_DOUBLE, \
+    ierr =  MPI_Alltoallv((void *) buffer_vec_remote_sending, (int*) sendingCount, 
+                            (int*) sendingBufferPtr, MPI_DOUBLE, 
+                          (void *) buffer_vec_remote_recv, (int*) remoteVecCount, 
+                            (int*) ptrRemoteVec, MPI_DOUBLE, 
                             MPI_COMM_WORLD);
 #ifdef DB_MPK_1_11_1
     int db_11_1_idx;
@@ -1589,8 +1589,8 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
             for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
             {
                 locally_computable_col_idx = compactedCSR.col_idx[idx];
-                last_result_val = k_level_result[ (my_level - 1)* myNumRow + \
-                                                    locally_computable_col_idx - \
+                last_result_val = k_level_result[ (my_level - 1)* myNumRow + 
+                                                    locally_computable_col_idx - 
                                                     myRowStart];
                 k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
 #ifdef DB_MPK_1_10_2
@@ -1661,24 +1661,24 @@ void Sparse_Csr_Matrix_Distribution_kLevel_net_v1_develop(csrType_local * localM
             {
                 locally_incomputable_col_idx = compactedCSR.col_idx[idx];
 #ifdef DB_MPK_1_12_1
-        if (locally_incomputable_col_idx < myRowStart ||  \ 
+        if (locally_incomputable_col_idx < myRowStart ||  
             locally_incomputable_col_idx > myRowEnd)
         {
-            assert (remoteValResultRecoder.find(locally_incomputable_col_idx) != \
+            assert (remoteValResultRecoder.find(locally_incomputable_col_idx) != 
                     remoteValResultRecoder.end());
             // assert (remoteValResultRecoder[locally_incomputable_col_idx].size() >= (my_level-1) || \
             //         remoteValResultRecoder[locally_incomputable_col_idx].size() ==  my_level);
 
         }
 #endif
-                if ( RecursiveDependentEleComputation(remoteValResultRecoder, compactedCSR, \
-                            locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,\
+                if ( RecursiveDependentEleComputation(remoteValResultRecoder, compactedCSR, 
+                            locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,
                             myid, numprocs ) )
                 {
                     if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
                     {
-                        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + \
-                                                    locally_incomputable_col_idx - \
+                        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+                                                    locally_incomputable_col_idx - 
                                                     myRowStart];
 #ifdef DB_MPK_1_12_1
         if (myid==0 && my_level == 2)
