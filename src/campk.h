@@ -64,6 +64,10 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
 void campk_after_comm_computation_v3 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
                                  , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
+
+void campk_after_comm_computation_v4 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
+                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
 #ifdef	__cplusplus
 }
 #endif

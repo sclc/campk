@@ -214,7 +214,11 @@ void campk_v1(denseType X, denseType &AkX , int kval
    //                             , vec_result_length, myNumRow, myRowStart, myRowEnd, vec_remote_recv_idx, buffer_vec_remote_recv 
    //                             , numRemoteVec, kval,myid, numprocs);
 
-    campk_after_comm_computation_v3 (compactedCSR, k_level_result, k_level_locally_computable_flags 
+    //campk_after_comm_computation_v3 (compactedCSR, k_level_result, k_level_locally_computable_flags 
+    //                            , vec_result_length, myNumRow, myRowStart, myRowEnd, vec_remote_recv_idx, buffer_vec_remote_recv 
+    //                            , numRemoteVec, kval,myid, numprocs);
+
+    campk_after_comm_computation_v4 (compactedCSR, k_level_result, k_level_locally_computable_flags 
                                 , vec_result_length, myNumRow, myRowStart, myRowEnd, vec_remote_recv_idx, buffer_vec_remote_recv 
                                 , numRemoteVec, kval,myid, numprocs);
 ///////////////////////////////////// actual code done
@@ -1070,5 +1074,97 @@ void campk_after_comm_computation_v3 (csrType_local_var compactedCSR, double *k_
     }
     free(remoteValResultRecoderZone); 
 }
+///////////////////////////////////////////////////
+
+void campk_after_comm_computation_v4 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
+                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs)
+{
+
+    long locally_incomputable_col_idx;
+    long remoteEleStartIdx, remoteEleEndIdx;
+    long remoteEleIdx;
+    long remoteLocallyComputableColIdx;
+
+    double * remoteValResultRecoderZone = (double *)malloc( compactedCSR.num_cols *(kval-1)*sizeof(double) );
+    // set values of remoteValResultRecoderZone to be SPEC_VAL
+    //, and assume that if a value of remoteValResultRecoderZone has changed
+    //, it will be different from SPEC_VAL
+    std::fill( remoteValResultRecoderZone, remoteValResultRecoderZone + compactedCSR.num_cols *(kval-1), SPEC_VAL );
+
+    long idx;
+    long eleStartIdx, eleEndIdx;
+    long resPtr, myRowIdx;
+
+    int my_level;
+    int num_level_computable;
+
+    double last_result_val;
+
+    bool recursiveChecker=false;
+
+
+    for (idx=0; idx<numRemoteVec;idx++)
+    {
+        remoteValResultRecoderZone[ vec_remote_recv_idx[idx] ] = buffer_vec_remote_recv[idx];
+    }
+
+
+    for (resPtr=myNumRow; resPtr<vec_result_length; resPtr++)
+    {
+        num_level_computable =  (int)k_level_locally_computable_flags[resPtr];
+
+        my_level = (int) (resPtr / myNumRow);
+
+        if (num_level_computable != my_level)
+        {
+            myRowIdx = (resPtr%myNumRow) + myRowStart;
+            eleStartIdx = compactedCSR.row_start[myRowIdx];
+            eleEndIdx   = compactedCSR.row_end[myRowIdx];
+
+            for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+            {
+                locally_incomputable_col_idx = compactedCSR.col_idx[idx];
+
+                if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
+                {
+                    last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+                                                locally_incomputable_col_idx - 
+                                                myRowStart];
+                    k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+		    continue;
+                }
+
+                last_result_val = remoteValResultRecoderZone[(my_level - 1)*compactedCSR.num_cols + locally_incomputable_col_idx];
+    		if ( last_result_val != SPEC_VAL) // SPEC_VAL, magic number  
+		{
+                    	k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+			continue;
+		}
+
+/////////////////////////////// actural code starts
+                recursiveChecker = RecursiveDependentEleComputation_mut2(remoteValResultRecoderZone, compactedCSR, 
+                            locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,
+                            myid, numprocs );
+//////////////////////////////////// actural code ends
+                if ( recursiveChecker )
+                {
+                    last_result_val = remoteValResultRecoderZone[(my_level - 1)*compactedCSR.num_cols + locally_incomputable_col_idx];
+
+                    k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+                }
+
+                recursiveChecker = false;
+            }
+        }
+        else 
+        {
+            continue;
+        }
+     
+    }
+    free(remoteValResultRecoderZone); 
+}
+
 ///////////////////////////////////////////////////
 

@@ -45,6 +45,11 @@ bool RecursiveDependentEleComputation_mut2(double * remoteValResultRecoderZone, 
                                       double *k_level_result, long myRowStart, long myRowEnd, long myNumRow,
                                       int myid, int numprocs);
 
+bool RecursiveDependentEleComputation_mut3(double * remoteValResultRecoderZone, \
+                                      csrType_local_var mat, long  eleIdx, int my_level,\
+                                      double *k_level_result, long myRowStart, long myRowEnd, long myNumRow,
+                                      int myid, int numprocs);
+
 void dense_matrix_local_transpose_row_order(denseType inMat, denseType outMat);
 
 //even if both src and target are denseType matrices,
