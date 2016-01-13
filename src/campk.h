@@ -7,6 +7,7 @@
 // #include <mpi.h>
 #include <queue>
 #include <iostream>
+#include <algorithm>
 #include <omp.h>
 #include "DataTypes.h"
 
@@ -14,6 +15,11 @@
 #include <mpi.h>
 #define MPI_HEADERS
 #endif
+
+#ifndef GLOBAL_VARS
+#include "globalvars.h"
+#define GLOBAL_VARS
+#endif 
 
 #ifdef	__cplusplus
 extern "C" {
@@ -41,6 +47,7 @@ void campk_local_dependecy_BFS_v2 (csrType_local entireCsrMat, std::map<long, st
 void campk_compacting_csr_v1 (csrType_local_var &compactedCSR, std::map<long, std::vector<int> > dependencyRecoder \
                            , csrType_local entireCsrMat, int myid, int numprocs);
 
+
 int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, std::map<long, std::vector<int> > dependencyRecoder \
                                                , double *& buffer_vec_remote_recv, short  *k_level_locally_computable_flags \
                                                , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd \
@@ -50,10 +57,9 @@ void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_
                                  , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx \
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int myid, int numprocs);
 
-void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags \
-                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx \
-                                 , double * buffer_vec_remote_recv, int numRemoteVec, int myid, int numprocs);
-
+void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
+                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
 #ifdef	__cplusplus
 }
 #endif
@@ -67,7 +73,8 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
 
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_ALL
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_1
-#define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_ALL
-#define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_1
+// #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_ALL
+// #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_1
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_OMP_1
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_DUP_CHECK
+

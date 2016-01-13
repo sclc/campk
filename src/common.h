@@ -13,6 +13,11 @@
 #define MPI_HEADERS
 #endif
 
+#ifndef GLOBAL_VARS
+#include "globalvars.h"
+#define GLOBAL_VARS
+#endif 
+
 #include "DataTypes.h"
 
 #ifdef	__cplusplus
@@ -27,6 +32,10 @@ void Local_Dense_Mat_Generator(denseType * mat, long num_rows, long num_cols,\
 	                 double ranMin, double ranMax);
 
 bool RecursiveDependentEleComputation(std::map<long, std::vector<double> >& remoteValResultRecoder, \
+                                      csrType_local_var mat, long  eleIdx, int my_level,\
+                                      double *k_level_result, long myRowStart, long myRowEnd, long myNumRow,
+                                      int myid, int numprocs);
+bool RecursiveDependentEleComputation_mut(double * remoteValResultRecoderZone, \
                                       csrType_local_var mat, long  eleIdx, int my_level,\
                                       double *k_level_result, long myRowStart, long myRowEnd, long myNumRow,
                                       int myid, int numprocs);
@@ -60,6 +69,7 @@ void DenseMatrixComparsion (denseType mat1, denseType mat2);
 void ClearQueue (std::queue<long> &rowIdxScanQueue);
 
 void RecurisiveCallOverheadProfiling (int level);
+
 
 #ifdef	__cplusplus
 }
