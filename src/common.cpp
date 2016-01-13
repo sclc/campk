@@ -278,6 +278,62 @@ bool RecursiveDependentEleComputation_mut(double * remoteValResultRecoderZone, \
 
     return true;
  }
+///////////////////////////////////////////
+bool RecursiveDependentEleComputation_mut2(double * remoteValResultRecoderZone, \
+                                      csrType_local_var mat, long  eleIdx, int my_level,\
+                                      double *k_level_result, long myRowStart, long myRowEnd, long myNumRow,
+                                      int myid, int numprocs) 
+ {
+    
+    long eleStartIdx, eleEndIdx;
+    long idx;
+    long dependentColIdx;
+    double last_result_val;
+
+    assert (my_level > 0);
+    my_level--;
+
+
+    // to avoid redundant computation
+  //  if (eleIdx >= myRowStart && eleIdx <= myRowEnd) 
+  //  {
+  //      return true;
+  //  } 
+     // logically speaking, if bfs phrase works well, when my_level==0, remoteValResultRecorderZone valus should be != SPEC_VAL 
+     // so, if the code below doesnot return, it means my_level now is larger than 0	
+    if ( remoteValResultRecoderZone[ my_level* mat.num_cols + eleIdx] != SPEC_VAL) // SPEC_VAL, magic number  
+    {
+        return true;
+    }
+	
+
+    double valtemp = 0.0;
+    // all code later on are for eleIdx < myRowStart || eleIdx > myRowEnd cases
+    eleStartIdx = mat.row_start[eleIdx];
+    eleEndIdx   = mat.row_end  [eleIdx];
+
+    for (idx = eleStartIdx; idx<=eleEndIdx; idx++)
+    {
+        dependentColIdx = mat.col_idx[idx];
+	
+        if (dependentColIdx >= myRowStart && dependentColIdx <= myRowEnd)
+        {
+            last_result_val = k_level_result[ (my_level - 1)* myNumRow + dependentColIdx - myRowStart];
+            valtemp += mat.csrdata[idx] * last_result_val;            
+            continue;
+        }
+
+        if ( RecursiveDependentEleComputation_mut2(remoteValResultRecoderZone, mat, dependentColIdx, my_level,\
+                                    k_level_result, myRowStart, myRowEnd, myNumRow, myid, numprocs) )
+        {
+            last_result_val = remoteValResultRecoderZone[ (my_level-1)*mat.num_cols + dependentColIdx ];
+            valtemp += mat.csrdata[idx] * last_result_val;            
+        }
+   }
+    remoteValResultRecoderZone[ my_level * mat.num_cols + eleIdx] = valtemp;            
+
+    return true;
+ }
 
 // storage in outMat has been allocated, inMat and outMat have the same size
 // inMat is row order matrix, and outMat is the col order matrix
