@@ -350,19 +350,6 @@ bool RecursiveDependentEleComputation_mut3(double * remoteValResultRecoderZone, 
     my_level--;
 
 
-    // to avoid redundant computation
-  //  if (eleIdx >= myRowStart && eleIdx <= myRowEnd) 
-  //  {
-  //      return true;
-  //  } 
-     // logically speaking, if bfs phrase works well, when my_level==0, remoteValResultRecorderZone valus should be != SPEC_VAL 
-     // so, if the code below doesnot return, it means my_level now is larger than 0	
- //   if ( remoteValResultRecoderZone[ my_level* mat.num_cols + eleIdx] != SPEC_VAL) // SPEC_VAL, magic number  
- //   {
- //       return true;
- //   }
-	
-
     double valtemp = 0.0;
     // all code later on are for eleIdx < myRowStart || eleIdx > myRowEnd cases
     eleStartIdx = mat.row_start[eleIdx];
@@ -447,3 +434,4 @@ void RecurisiveCallOverheadProfiling (int level)
     RecurisiveCallOverheadProfiling(level-1);
 
 }
+

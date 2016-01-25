@@ -36,11 +36,19 @@ void campk_v1(denseType X, denseType &AkX , int kval \
 	             , matInfo * mat_info, int myid, int numprocs \
 	             , char* path, char* mtx_filename);
 
+void campk_v2(denseType X, denseType &AkX , int kval \
+	             , matInfo * mat_info, int myid, int numprocs \
+	             , char* path, char* mtx_filename);
+
 void campk_local_dependecy_BFS_v1 (csrType_local entireCsrMat, std::map<long, std::vector<int> > &dependencyRecoder \
                                  , long myNumRow, long myRowStart, long myRowEnd, short * k_level_locally_computable_flags, int kval \
                                  , int myid, int numprocs);
 
 void campk_local_dependecy_BFS_v2 (csrType_local entireCsrMat, std::map<long, std::vector<int> > &dependencyRecoder \
+                                 , long myNumRow, long myRowStart, long myRowEnd, short * k_level_locally_computable_flags, int kval \
+                                 , int myid, int numprocs);
+
+void campk_local_dependecy_BFS_v3 (csrType_local entireCsrMat, std::map<long, std::vector<int> > &dependencyRecoder \
                                  , long myNumRow, long myRowStart, long myRowEnd, short * k_level_locally_computable_flags, int kval \
                                  , int myid, int numprocs);
 
@@ -68,6 +76,12 @@ void campk_after_comm_computation_v3 (csrType_local_var compactedCSR, double *k_
 void campk_after_comm_computation_v4 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
                                  , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
+
+void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
+				 , double * remoteValResultRecoderZone, std::vector< std::map <int,long> > levelPatternRemoteVals
+				 , long offsetRemoteValCounter[], long offsetRemoteVal[] 
+                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
 #ifdef	__cplusplus
 }
 #endif
@@ -85,4 +99,6 @@ void campk_after_comm_computation_v4 (csrType_local_var compactedCSR, double *k_
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_1
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_OMP_1
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_DUP_CHECK
+
+//#define PRINT_DEPENDENCY_RECODER
 

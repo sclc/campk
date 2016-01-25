@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 // }
 #ifdef PROF_ALL
     double t1, t2, t_past_local, t_past_global;
-#endif
+#endif /*PROF_ALL*/
 
     if (argc < 6) {
         printf("Argument setting is wrong.\n");
@@ -76,14 +76,7 @@ int main(int argc, char* argv[]) {
     ierr = MPI_Comm_rank(MPI_COMM_WORLD, &myid);   
     ierr = MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
-    printf ("myid:%d, I want:%d, I got:%d \n", myid, MPI_THREAD_MULTIPLE, hybridProvided);
-    #pragma omp parallel
-{
-    omp_set_num_threads (4);
-    int ompnum = omp_get_num_threads();
-    int ompid = omp_get_thread_num();
-    printf ("total:%d, I am: %d\n", ompnum, ompid);
-}
+    printf ("total: %d procs, myid:%d, I want:%d, I got:%d \n", numprocs, myid, MPI_THREAD_MULTIPLE, hybridProvided);
 
     if (myid == 0) {
 
@@ -91,13 +84,11 @@ int main(int argc, char* argv[]) {
         printf("we can want to generate RHS with size of %d\n", set_num_cols);
     }
     
-// printf ("%ld, %ld, %ld", set_num_cols, solverIdx, sVal);
-    // exit(0);
-
     csrType_local local_Mat;
 
     denseType X;
     matInfo mat_info;
+
 //////////////////////////////////////////////////////////////////////////
 #ifdef COMPARAE_RES_1
     csrType_local local_Mat_comparator;
@@ -118,11 +109,9 @@ int main(int argc, char* argv[]) {
 #ifdef COMPARAE_RES_1_MPK_PROF
     ierr = MPI_Barrier(MPI_COMM_WORLD);
     t1 = MPI_Wtime();
-#endif
+#endif /*COMPARAE_RES_1_MPK_PROF*/
 ///////////////////////actural code start 
     mpk_v1(AkX_compartor, local_Mat_comparator, X, sVal, 1.0, 0.0, myid, numprocs);
-    delete_csrType_local (local_Mat_comparator);
-    
 ///////////////////////actural code end
 #ifdef COMPARAE_RES_1_MPK_PROF
     ierr = MPI_Barrier(MPI_COMM_WORLD);
@@ -133,25 +122,32 @@ int main(int argc, char* argv[]) {
     {
         printf ("mpk_v1 overhead: %lf sec\n", t_past_global);
     }
-#endif
+    printf ("myid: %d. mpk_v1 done\n", myid);
+#endif /*COMPARAE_RES_1_MPK_PROF*/
+    // ierr = MPI_Barrier(MPI_COMM_WORLD);
+    // exit(1);
+    
+//  free memory space
+    delete_csrType_local (local_Mat_comparator);
 
 #ifdef DB_COMPARAE_RES_1
-    printf ("myid: %d. mpk_v1 done\n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
-#endif
+#endif /*DB_COMPARAE_RES_1*/
 
     denseType AkX;
-    campk_v1(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
+    //campk_v1(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
+    campk_v2(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
 #ifdef DB_COMPARAE_RES_1
     printf ("myid: %d. campk_v1 done\n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
-#endif
+#endif /*DB_COMPARAE_RES_1*/
     
     DenseMatrixComparsion (AkX, AkX_compartor);
     printf ("myid: %d. passed \n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 
 #endif  /*COMPARAE_RES_1*/
+//////////////////////////////////////////////////////////////////////////
 
 ///////////////////////actural code start 
 #ifdef PROF_RECURSIVE
@@ -200,7 +196,7 @@ int main(int argc, char* argv[]) {
 #ifdef MPK_PROF
     ierr = MPI_Barrier(MPI_COMM_WORLD);
     t1 = MPI_Wtime();
-#endif
+#endif /*MPK_PROF*/
 ///////////////////////actural code start 
     mpk_v1(AkX_compartor, local_Mat_comparator, X, sVal, 1.0, 0.0, myid, numprocs);
 
@@ -214,25 +210,25 @@ int main(int argc, char* argv[]) {
     {
         printf ("mpk_v1 overhead: %lf sec\n", t_past_global);
     }
-#endif
+#endif /*MPK_PROF*/
 
 #ifdef DB_COMPARAE_RES_1
     printf ("myid: %d. mpk_v1 done\n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
-#endif
+#endif /*DB_COMPARAE_RES_1*/
 
     denseType AkX;
     campk_v1(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
 #ifdef DB_COMPARAE_RES_1
     printf ("myid: %d. campk_v1 done\n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
-#endif
+#endif /*DB_COMPARAE_RES_1*/
     
     DenseMatrixComparsion (AkX, AkX_compartor);
     printf ("myid: %d. passed \n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 
-#endif
+#endif /*COMPARAE_RES_2*/
 //////////////////////////////////////////////////////////////////////////
     // generate X
        // GenVectorOne(mat_info.num_rows, &B, set_num_cols,myid, numprocs);
@@ -280,7 +276,7 @@ int main(int argc, char* argv[]) {
                 time_comm_sum/(double)loops, time_computation_sum/(double)loops);
     }
     
-#endif
+#endif /*PROF_SPMM_v1*/
 
     //Garbage collection
     // delete_denseType(X);
