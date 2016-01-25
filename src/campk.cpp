@@ -1647,7 +1647,7 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
     //, it will be different from SPEC_VAL
     std::fill( remoteValResultRecoderZone, remoteValResultRecoderZone + offsetRemoteVal[kval], SPEC_VAL );
 
-    long idx;
+    long idx, valPos;
     long eleStartIdx, eleEndIdx;
     long resPtr, myRowIdx, tempRowIdx, tempColIdx, levelIdx, remoteZoneValIdx;
 
@@ -1661,11 +1661,14 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
     //printf ( "myid: %d, numRemoteVec: %d, offsetRemoteValCounter[0]:%ld \n", myid, numRemoteVec, offsetRemoteValCounter[0]);
     //exit(1);
     
+    assert ( numRemoteVec == offsetRemoteValCounter[0]);
 
-    for (idx=0; idx<numRemoteVec;idx++)
+    for (idx=0; idx< offsetRemoteValCounter[0] ;idx++)
     {
-        remoteValResultRecoderZone[ vec_remote_recv_idx[idx] ] = buffer_vec_remote_recv[idx];
+	valPos = levelPatternRemoteVals[0][ vec_remote_recv_idx[idx] ]; 
+        remoteValResultRecoderZone[ valPos ] = buffer_vec_remote_recv[idx];
     }
+
 
  //   for (levelIdx = 1; levelIdx<kval; levelIdx++)
  //   {
