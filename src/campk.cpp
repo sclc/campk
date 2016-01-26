@@ -344,6 +344,7 @@ void campk_v2(denseType X, denseType &AkX , int kval
 
     // compute locally computable elements
     long vec_result_length = AkX.local_num_row * AkX.local_num_col;
+    // this zone is not long enough if we want Ax to A^kvalx
     double *k_level_result = (double*) calloc ( vec_result_length,sizeof(double) );
 
     // this should be replaced by real x values *****
@@ -366,6 +367,7 @@ void campk_v2(denseType X, denseType &AkX , int kval
 #endif
 
 /////////////////////////////////
+    // not long enough if you want Ax to A^kval x
     short  *k_level_locally_computable_flags = (short *) calloc (myNumRow * kval, sizeof(short) );
 
     campk_local_dependecy_BFS_v3 (entireCsrMat, dependencyRecoder, myNumRow, myRowStart, myRowEnd, k_level_locally_computable_flags, kval\
@@ -427,6 +429,8 @@ void campk_v2(denseType X, denseType &AkX , int kval
     {
 	offsetRemoteVal[remoteLevelIdx] = offsetRemoteValCounter[remoteLevelIdx - 1] + offsetRemoteVal[ remoteLevelIdx - 1 ];
     }
+    // from level 0 to level kval-1
+    // since when kval means we want Ax to A^kval, we do not need remote dependency cal on the kval-th level
     allRemoteValLength = offsetRemoteVal[kval];
 
     double * remoteValResultRecoderZone = (double * ) malloc ( allRemoteValLength * sizeof (double) );
@@ -1641,6 +1645,7 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
     long remoteEleStartIdx, remoteEleEndIdx;
     long remoteEleIdx;
     long remoteLocallyComputableColIdx;
+    std::map <int,long> ::iterator iterator_levelPatternRemoteVals_map; 
 
     // set values of remoteValResultRecoderZone to be SPEC_VAL
     //, and assume that if a value of remoteValResultRecoderZone has changed
@@ -1656,8 +1661,6 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
 
     double last_result_val;
 
-    bool recursiveChecker=false;
-
     //printf ( "myid: %d, numRemoteVec: %d, offsetRemoteValCounter[0]:%ld \n", myid, numRemoteVec, offsetRemoteValCounter[0]);
     //exit(1);
     
@@ -1670,96 +1673,86 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
     }
 
 
- //   for (levelIdx = 1; levelIdx<kval; levelIdx++)
- //   {
- //     long remoteZoneStart = (levelIdx - 1) * compactedCSR.num_cols;
- //     long remoteZoneEnd   = levelIdx       * compactedCSR.num_cols;
- //     long remoteColIdxCounter = 0;
- //    //compute remote computable
- //       for ( remoteZoneValIdx= remoteZoneStart; remoteZoneValIdx < remoteZoneEnd; remoteZoneValIdx++ )
- //       {
- //       	if ( remoteValResultRecoderZone[remoteZoneValIdx] == SPEC_VAL) continue;
- //       	remoteVal
+    for (levelIdx = 1; levelIdx<kval; levelIdx++)
+    //for (levelIdx = 1; levelIdx<kval-1; levelIdx++) 
+    {
+	long thisLevelLocalResStart = levelIdx*myNumRow;
+	long thisLevelLocalResEnd   = thisLevelLocalResStart + myNumRow;
+	my_level = levelIdx;
 
- //       	tempRowIdx = remoteColIdxCounter;
- //        	eleStartIdx = compactedCSR.row_start[tempRowIdx];
- //       	eleEndIdx   = compactedCSR.row_end[tempRowIdx];	
- //       	
- //       	for ( idx = eleStartIdx; idx<=eleEndIdx; idx++)
- //       	{
- //       		tempColIdx = compactedCSR.col_idx[idx];	
- //              		 if (tempColIdx >= myRowStart && tempColIdx<= myRowEnd)
- //              		 {
- //              		     last_result_val = k_level_result[ (levelIdx - 1)* myNumRow   + 
- //              		                                 locally_incomputable_col_idx - 
- //              		                                 myRowStart];
- //              		     remoteValResultRecoderZone[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
- //              		     continue;
- //              		 }
- //       	}
+//compute local computable on this level
+	for (resPtr = thisLevelLocalResStart; resPtr< thisLevelLocalResEnd; resPtr++)
+	{
+		num_level_computable =  (int)k_level_locally_computable_flags[resPtr];		
 
- //       		
- //       	remoteColIdxCounter++;
- //       }
- //    
- //    //compute all local values on this level 
- //   }
+		if (num_level_computable != my_level)
+		{
+		    myRowIdx = (resPtr%myNumRow) + myRowStart;
+		    eleStartIdx = compactedCSR.row_start[myRowIdx];
+		    eleEndIdx   = compactedCSR.row_end[myRowIdx];
+		
+		    for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+		    {
+		        locally_incomputable_col_idx = compactedCSR.col_idx[idx];
+				
+		        if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
+		        {
+		            last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+		                                        locally_incomputable_col_idx - 
+		                                        myRowStart];
+		            k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+			    continue;
+		        }
+		
+			valPos = levelPatternRemoteVals[my_level-1][ locally_incomputable_col_idx ];
+			last_result_val = remoteValResultRecoderZone[valPos];
+			assert (last_result_val != SPEC_VAL);
+		        k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+		    }
+		}
+		else 
+		{
+		    continue;
+		}
+	}
+     
+     //compute remote computable on this level 
+	for ( iterator_levelPatternRemoteVals_map = levelPatternRemoteVals[my_level].begin(); 
+		iterator_levelPatternRemoteVals_map != levelPatternRemoteVals[my_level].end(); 
+		++iterator_levelPatternRemoteVals_map )
+	{
+		long remoteValRowIdx = (long) iterator_levelPatternRemoteVals_map->first;
+		long remoteValPos    = iterator_levelPatternRemoteVals_map->second; 
+		assert ( remoteValResultRecoderZone[remoteValPos] == SPEC_VAL );
+		remoteValResultRecoderZone[remoteValPos] = 0.0;
 
+		eleStartIdx = compactedCSR.row_start[remoteValRowIdx];
+		eleEndIdx   = compactedCSR.row_end[remoteValRowIdx];
+		
+		for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+		{
+		    locally_incomputable_col_idx = compactedCSR.col_idx[idx];
+		    	
+		    if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
+		    {
+		        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+		                                    locally_incomputable_col_idx - 
+		                                    myRowStart];
+		        remoteValResultRecoderZone[remoteValPos] += compactedCSR.csrdata[idx] * last_result_val;
+		        continue;
+		    }
+		
+		    valPos = levelPatternRemoteVals[my_level-1][ locally_incomputable_col_idx ];
+		    last_result_val = remoteValResultRecoderZone[valPos];
+		    assert (last_result_val != SPEC_VAL);
+		    remoteValResultRecoderZone[remoteValPos] += compactedCSR.csrdata[idx] * last_result_val;
+		}
+	}
 
- //   for (resPtr=myNumRow; resPtr<vec_result_length; resPtr++)
- //   {
- //       num_level_computable =  (int)k_level_locally_computable_flags[resPtr];
+    }
 
- //       my_level = (int) (resPtr / myNumRow);
-
- //       if (num_level_computable != my_level)
- //       {
- //           myRowIdx = (resPtr%myNumRow) + myRowStart;
- //           eleStartIdx = compactedCSR.row_start[myRowIdx];
- //           eleEndIdx   = compactedCSR.row_end[myRowIdx];
-
- //           for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
- //           {
- //               locally_incomputable_col_idx = compactedCSR.col_idx[idx];
-
- //               if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
- //               {
- //                   last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
- //                                               locally_incomputable_col_idx - 
- //                                               myRowStart];
- //                   k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
- //       	    continue;
- //               }
-
- //               last_result_val = remoteValResultRecoderZone[(my_level - 1)*compactedCSR.num_cols + locally_incomputable_col_idx];
- //   		if ( last_result_val != SPEC_VAL) // SPEC_VAL, magic number  
- //       	{
- //                   	k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
- //       		continue;
- //       	}
-
-///////////////////////////////// actural code starts
- //               recursiveChecker = RecursiveDependentEleComputation_mut3(remoteValResultRecoderZone, compactedCSR, 
- //                           locally_incomputable_col_idx, my_level, k_level_result, myRowStart, myRowEnd, myNumRow,
- //                           myid, numprocs );
-////////////////////////////////////// actural code ends
- //               if ( recursiveChecker )
- //               {
- //                   last_result_val = remoteValResultRecoderZone[(my_level - 1)*compactedCSR.num_cols + locally_incomputable_col_idx];
-
- //                   k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
- //               }
-
- //               recursiveChecker = false;
- //           }
- //       }
- //       else 
- //       {
- //           continue;
- //       }
- //    
- //   }
- //   free(remoteValResultRecoderZone); 
+    // compute kval level local value 
+    my_level = kval;
 
 }
 

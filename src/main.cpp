@@ -135,8 +135,8 @@ int main(int argc, char* argv[]) {
 #endif /*DB_COMPARAE_RES_1*/
 
     denseType AkX;
-    //campk_v1(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
-    campk_v2(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
+   //campk_v1(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
+   campk_v2(X, AkX, (int)sVal, &mat_info, myid, numprocs, path, mtx_filename);
 #ifdef DB_COMPARAE_RES_1
     printf ("myid: %d. campk_v1 done\n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
