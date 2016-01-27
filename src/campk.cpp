@@ -397,11 +397,14 @@ void campk_v2(denseType X, denseType &AkX , int kval
 // must use BFS_3
     std::vector< std::map <int,long> > levelPatternRemoteVals(kval);
     long allRemoteValLength = 0;
-    long offsetRemoteValCounter[kval];
-    long offsetRemoteValCounterTemp[kval];
-    long offsetRemoteVal[kval+1];
+    //long offsetRemoteValCounter[kval];
+    long offsetRemoteValCounter[kval-1];
+    //long offsetRemoteValCounterTemp[kval];
+    long offsetRemoteValCounterTemp[kval-1];
+    //long offsetRemoteVal[kval+1];
+    long offsetRemoteVal[kval];
     int remoteLevelIdx, levelVal;
-    for (remoteLevelIdx =0 ; remoteLevelIdx < kval; remoteLevelIdx++)
+    for (remoteLevelIdx =0 ; remoteLevelIdx < kval-1; remoteLevelIdx++)
     {
 	offsetRemoteValCounter[remoteLevelIdx] = 0;
 	offsetRemoteValCounterTemp[remoteLevelIdx] = 0;
@@ -418,20 +421,21 @@ void campk_v2(denseType X, denseType &AkX , int kval
 	{
 
 		levelVal = mapIterIdx->second[remoteLevelIdx] ; 
-		assert (levelVal < kval);
+		//assert (levelVal < kval);
+		assert (levelVal < kval-1);
 
 		offsetRemoteValCounter[ levelVal ] +=1;
 	}
     }
     
     offsetRemoteVal[0] = 0;
-    for (remoteLevelIdx =1 ; remoteLevelIdx <= kval; remoteLevelIdx++)
+    //for (remoteLevelIdx =1 ; remoteLevelIdx <= kval; remoteLevelIdx++)
+    for (remoteLevelIdx =1 ; remoteLevelIdx < kval; remoteLevelIdx++)
     {
 	offsetRemoteVal[remoteLevelIdx] = offsetRemoteValCounter[remoteLevelIdx - 1] + offsetRemoteVal[ remoteLevelIdx - 1 ];
     }
     // from level 0 to level kval-1
-    // since when kval means we want Ax to A^kval, we do not need remote dependency cal on the kval-th level
-    allRemoteValLength = offsetRemoteVal[kval];
+    allRemoteValLength = offsetRemoteVal[kval-1];
 
     double * remoteValResultRecoderZone = (double * ) malloc ( allRemoteValLength * sizeof (double) );
 
@@ -865,7 +869,7 @@ void campk_local_dependecy_BFS_v3 (csrType_local entireCsrMat, std::map<long, st
 #ifdef MEM_USAGE_1
     int mapSize = 0, queueSize=0, idxchecker=10000;
 #endif
-    for (idx = kval; idx>0; idx--)
+    for (idx = kval-1; idx>0; idx--)
     {
         // level idx being out of queue
         //, level idx+1 go into queue
@@ -1247,7 +1251,197 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
 
     return numRemoteVec;
 }
+///////////////////////////////////
 
+int campk_comm_overlaping_local_computation_v2 (csrType_local_var compactedCSR, std::map<long, std::vector<int> > dependencyRecoder 
+                                               , double *& buffer_vec_remote_recv, short  *k_level_locally_computable_flags 
+                                               , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd 
+                                               , long averageNumRowPerProc, long *& vec_remote_recv_idx, int myid, int numprocs)
+{
+    //all dependencyRecoder.first are necessary elements of x to compute A^kx, .., A^1x
+    //, so prepare buffers for MPI call to transfer this x elements
+    // count parameters for MPI_Alltoallv have to be in int type
+    int numRemoteVec=0, numSendingVec=0; // for preparing buffer to receive remote vec items
+    int ptrRemoteVec[numprocs], remoteVecCount[numprocs];
+    int sendingCount[numprocs];
+    int sendingBufferPtr[numprocs];
+    int tempRemoteVecCount[numprocs];
+
+    int my_level;
+    int num_level_computable;
+    long resPtr;
+    long myRowIdx, locally_computable_col_idx;
+    double last_result_val;
+
+    long idx;
+    int ierr;
+    long eleStartIdx, eleEndIdx;
+
+    for (idx=0; idx<numprocs;idx++)
+    {   
+        tempRemoteVecCount[idx] = 0;
+        remoteVecCount[idx] = 0;
+    }
+
+
+    std::map<long, std::vector<int> > ::iterator mapIterIdx_remote;
+    long rowIdxRemoteChecking;
+    int procPtr;
+    // double *buffer_vec_remote_recv = NULL;
+    double *buffer_vec_remote_sending = NULL;
+    long *vec_remote_sending_idx = NULL;
+
+
+
+// calculate remoteVecCount for processes and numRemoteVec for creating buffers
+    for (mapIterIdx_remote = dependencyRecoder.begin(); mapIterIdx_remote!=dependencyRecoder.end(); ++mapIterIdx_remote)
+    {
+        rowIdxRemoteChecking = mapIterIdx_remote->first;
+        if ( rowIdxRemoteChecking < myRowStart || rowIdxRemoteChecking > myRowEnd)
+        {
+            procPtr = (int) rowIdxRemoteChecking/averageNumRowPerProc;
+            procPtr = procPtr > (numprocs - 1) ? (numprocs - 1): procPtr;
+            remoteVecCount[ procPtr ] ++;
+            numRemoteVec++;
+        }
+
+    }
+#ifdef DB_COMM_LOCAL_COMP_V1
+    printf ("myid: %d.  communication done.numRemoteVec:%d\n", myid,numRemoteVec);
+    ierr = MPI_Barrier(MPI_COMM_WORLD);
+
+
+    printf ("function mission accomplished\n");
+    ierr = MPI_Barrier(MPI_COMM_WORLD);
+    exit(1);
+#endif
+    buffer_vec_remote_recv = (double *)malloc (numRemoteVec * sizeof(double));
+    vec_remote_recv_idx  =     (long *)malloc (numRemoteVec * sizeof(long));
+
+    ptrRemoteVec[0] = 0;
+    for (idx = 1; idx<numprocs;idx++ )
+    {
+        ptrRemoteVec[idx] = ptrRemoteVec[idx-1] + remoteVecCount[idx-1];
+    }
+
+// restore idx data to buffer for communicating
+    for (mapIterIdx_remote = dependencyRecoder.begin(); mapIterIdx_remote!=dependencyRecoder.end(); ++mapIterIdx_remote)
+    {
+        rowIdxRemoteChecking = mapIterIdx_remote->first;
+        if ( rowIdxRemoteChecking < myRowStart || rowIdxRemoteChecking > myRowEnd)
+        {
+            procPtr = (int) rowIdxRemoteChecking/averageNumRowPerProc;
+            procPtr = procPtr > (numprocs - 1) ? (numprocs - 1): procPtr;
+
+            // some redundant, may use map<key,val> to remove this 
+            //, optimize this part later on
+            vec_remote_recv_idx[ptrRemoteVec[procPtr] + tempRemoteVecCount[procPtr] ] = 
+                                rowIdxRemoteChecking;
+            tempRemoteVecCount[procPtr]++;
+        }
+
+    }
+
+    // int MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+    //                  void *recvbuf, int recvcount, MPI_Datatype recvtype,
+    //                  MPI_Comm comm)
+
+    ierr = MPI_Alltoall( (void *)remoteVecCount, 1, MPI_INT,
+                         (void *)sendingCount, 1, MPI_INT, MPI_COMM_WORLD);
+
+
+    sendingBufferPtr[0] = 0;
+    numSendingVec += sendingCount[0];
+    for (idx =1; idx<numprocs; idx++)
+    {
+        sendingBufferPtr[idx] = sendingBufferPtr[idx-1] + sendingCount[idx-1];
+        numSendingVec += sendingCount[idx];
+    }
+    
+
+    buffer_vec_remote_sending = (double *) malloc (numSendingVec*sizeof(double));
+    vec_remote_sending_idx =       (long *)malloc (numSendingVec*sizeof(double));
+
+    // int MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
+    //               const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
+    //               const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
+    //               MPI_Comm comm)
+
+    // to tell each process which idx I need
+    // , in bcbcg solver, this will only be applied once
+    // , so it does not matter wether it is syn or asyn
+    ierr =  MPI_Alltoallv((void *) vec_remote_recv_idx, (int*) remoteVecCount, 
+                            (int*) ptrRemoteVec, MPI_LONG, 
+                          (void *) vec_remote_sending_idx, (int*) sendingCount, 
+                            (int*) sendingBufferPtr,  MPI_LONG, 
+                            MPI_COMM_WORLD);
+
+    // to prepare buffer_vec_remote_sending for sending
+    long k_level_result_idx;
+    for (idx =0; idx< numSendingVec; idx++)
+    {
+        k_level_result_idx = vec_remote_sending_idx[idx];
+        assert (k_level_result_idx >= myRowStart && k_level_result_idx <= myRowEnd);
+
+        buffer_vec_remote_sending[idx] = k_level_result[k_level_result_idx-myRowStart];
+    }
+    //to tell each processes the vals they need
+    // , in bcbcg solver, this will be applied in each spmv call
+    // , so it should be asyn 
+    // , to optimize this part later on
+    //  if I want to use asynchronous send receive here
+    // , then I can not use MPI_Alltoallv
+    //I need to build a communicaiton table firstly
+    // , then do asynchronous p2p send recv
+    //based on matrix sparsity patterns, a dozens of send-recev may be called
+    // , and I am wondering how the performance will be in such cases
+    ierr =  MPI_Alltoallv((void *) buffer_vec_remote_sending, (int*) sendingCount, 
+                            (int*) sendingBufferPtr, MPI_DOUBLE, 
+                          (void *) buffer_vec_remote_recv, (int*) remoteVecCount, 
+                            (int*) ptrRemoteVec, MPI_DOUBLE, 
+                            MPI_COMM_WORLD);
+
+
+    //locally computatble
+        // compute locally computable
+    // ...
+
+    // in my campk design
+    //, the first myNumRow items in k_level_result are actually the original x in MPK
+    for (resPtr=myNumRow; resPtr<vec_result_length; resPtr++)
+    {
+        num_level_computable =  (int)k_level_locally_computable_flags[resPtr];
+        my_level = (int) (resPtr / myNumRow);
+
+        if (num_level_computable == my_level)
+        {
+            myRowIdx = (resPtr%myNumRow) + myRowStart;
+            eleStartIdx = compactedCSR.row_start[myRowIdx];
+            eleEndIdx   = compactedCSR.row_end[myRowIdx];
+
+            for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+            {
+                locally_computable_col_idx = compactedCSR.col_idx[idx];
+                last_result_val = k_level_result[ (my_level - 1)* myNumRow + 
+                                                    locally_computable_col_idx - 
+                                                    myRowStart];
+                k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+            }
+
+        }
+        else 
+        {
+            continue;
+        }
+
+    }
+
+    // free buffers
+    free (buffer_vec_remote_sending);
+    free (vec_remote_sending_idx);
+
+    return numRemoteVec;
+}
 ///////////////////////////////////
 void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
                                  , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
@@ -1650,7 +1844,8 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
     // set values of remoteValResultRecoderZone to be SPEC_VAL
     //, and assume that if a value of remoteValResultRecoderZone has changed
     //, it will be different from SPEC_VAL
-    std::fill( remoteValResultRecoderZone, remoteValResultRecoderZone + offsetRemoteVal[kval], SPEC_VAL );
+    //std::fill( remoteValResultRecoderZone, remoteValResultRecoderZone + offsetRemoteVal[kval], SPEC_VAL );
+    std::fill( remoteValResultRecoderZone, remoteValResultRecoderZone + offsetRemoteVal[kval-1], SPEC_VAL );
 
     long idx, valPos;
     long eleStartIdx, eleEndIdx;
@@ -1673,8 +1868,8 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
     }
 
 
-    for (levelIdx = 1; levelIdx<kval; levelIdx++)
-    //for (levelIdx = 1; levelIdx<kval-1; levelIdx++) 
+    //for (levelIdx = 1; levelIdx<kval; levelIdx++)
+    for (levelIdx = 1; levelIdx<kval-1; levelIdx++) 
     {
 	long thisLevelLocalResStart = levelIdx*myNumRow;
 	long thisLevelLocalResEnd   = thisLevelLocalResStart + myNumRow;
@@ -1723,7 +1918,9 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
 	{
 		long remoteValRowIdx = (long) iterator_levelPatternRemoteVals_map->first;
 		long remoteValPos    = iterator_levelPatternRemoteVals_map->second; 
+
 		assert ( remoteValResultRecoderZone[remoteValPos] == SPEC_VAL );
+
 		remoteValResultRecoderZone[remoteValPos] = 0.0;
 
 		eleStartIdx = compactedCSR.row_start[remoteValRowIdx];
@@ -1752,7 +1949,44 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
     }
 
     // compute kval level local value 
-    my_level = kval;
+	long thisLevelLocalResStart = (kval - 1)*myNumRow;
+	long thisLevelLocalResEnd   = thisLevelLocalResStart + myNumRow;
+	my_level = kval-1;
+
+	for (resPtr = thisLevelLocalResStart; resPtr< thisLevelLocalResEnd; resPtr++)
+	{
+		num_level_computable =  (int)k_level_locally_computable_flags[resPtr];		
+	
+		if (num_level_computable != my_level)
+		{
+		    myRowIdx = (resPtr%myNumRow) + myRowStart;
+		    eleStartIdx = compactedCSR.row_start[myRowIdx];
+		    eleEndIdx   = compactedCSR.row_end[myRowIdx];
+		
+		    for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+		    {
+		        locally_incomputable_col_idx = compactedCSR.col_idx[idx];
+				
+		        if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
+		        {
+		            last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+		                                        locally_incomputable_col_idx - 
+		                                        myRowStart];
+		            k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+			    continue;
+		        }
+		
+			valPos = levelPatternRemoteVals[my_level-1][ locally_incomputable_col_idx ];
+			last_result_val = remoteValResultRecoderZone[valPos];
+			assert (last_result_val != SPEC_VAL);
+		        k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+		    }
+		}
+		else 
+		{
+		    continue;
+		}
+	}
 
 }
 

@@ -61,6 +61,11 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
                                                , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd \
                                                , long averageNumRowPerProc, long *& vec_remote_recv_idx, int myid, int numprocs);
 
+int campk_comm_overlaping_local_computation_v2 (csrType_local_var compactedCSR, std::map<long, std::vector<int> > dependencyRecoder \
+                                               , double *& buffer_vec_remote_recv, short  *k_level_locally_computable_flags \
+                                               , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd \
+                                               , long averageNumRowPerProc, long *& vec_remote_recv_idx, int myid, int numprocs);
+
 void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags \
                                  , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx \
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int myid, int numprocs);
