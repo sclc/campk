@@ -24,6 +24,7 @@ extern "C" {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 
 void TridiagonalCSR_val(csrType_local * mat, long rowDim, long colDim, double val);
