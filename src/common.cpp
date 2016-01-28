@@ -422,6 +422,30 @@ void DenseMatrixComparsion (denseType mat1, denseType mat2)
     }
 }
 
+void DenseMatrixComparsion_update1 (denseType mat1, denseType mat2)
+{
+    long length = mat1.local_num_row * mat1.local_num_col;
+    assert (mat1.local_num_row == mat2.local_num_row);
+    assert (mat1.local_num_col == mat2.local_num_col);
+
+    long idx;
+    
+    double epsilon = 1.0;
+    int epsilonCounter = 0;
+
+    while (epsilon != 0.0) {epsilon/=2; epsilonCounter++;}
+    //printf ("epsilon=%80.79lf, epsiloncounter:%d \n", epsilon, epsilonCounter);
+    printf ("epsiloncounter:%d \n", epsilonCounter);
+
+    for  (idx=0; idx<length; idx++)
+    {
+        if (abs (mat1.data[idx] - mat2.data[idx]) > epsilon  )
+        {
+            printf ("idx:%ld, mat1: %lf, mat2: %lf difference: %lf\n", idx, mat1.data[idx], mat2.data[idx], mat1.data[idx]-mat2.data[idx]);
+        }
+    }
+}
+
 void ClearQueue (std::queue<long> &rowIdxScanQueue)
 {
     std::queue<long> empty;

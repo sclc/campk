@@ -142,7 +142,8 @@ int main(int argc, char* argv[]) {
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif /*DB_COMPARAE_RES_1*/
     
-    DenseMatrixComparsion (AkX, AkX_compartor);
+    //DenseMatrixComparsion (AkX, AkX_compartor);
+    DenseMatrixComparsion_update1 (AkX, AkX_compartor);
     printf ("myid: %d. passed \n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 
@@ -224,7 +225,8 @@ int main(int argc, char* argv[]) {
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif /*DB_COMPARAE_RES_1*/
     
-    DenseMatrixComparsion (AkX, AkX_compartor);
+    //DenseMatrixComparsion (AkX, AkX_compartor);
+    DenseMatrixComparsion_update1 (AkX, AkX_compartor);
     printf ("myid: %d. passed \n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 

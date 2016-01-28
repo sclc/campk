@@ -76,6 +76,8 @@ void dense_array_mat_mat_mat_add_TP_disp(double* mat1Data, long mat1Disp
 
 void DenseMatrixComparsion (denseType mat1, denseType mat2);
 
+void DenseMatrixComparsion_update1 (denseType mat1, denseType mat2);
+
 void ClearQueue (std::queue<long> &rowIdxScanQueue);
 
 void RecurisiveCallOverheadProfiling (int level);
