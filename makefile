@@ -1,40 +1,47 @@
-#CXX ?= mpiFCCpx
-
+echo "run  . set_ompi-1.8.2_p15.7_cuda7.0.sh"
 ########at52
-CC = mpicc
-CXX= mpic++ 
+#CC = mpicc
+#CXX= mpic++ 
 # FC="mpifrtpx" 
-CPPFLAGS = 
-CFLAGS= -O -Wall
-CXXFLAGS= -O -O2 -Wall 
+#CPPFLAGS = 
+#CFLAGS= -O -Wall
+#CXXFLAGS= -O -O2 -Wall 
 ########k-computer
-#CXX ?= mpiFCCpx
 # CC = mpifccpx
 # CXX= mpiFCCpx 
 # FC="mpifrtpx" 
-#CPPFLAGS = -I/opt/klocal/include
-#CFLAGS=-Xg -O2 -KPIC -O -Wall
-#FCFLAGS=-X9 -O2 -KPIC -O -fopenmp
-#CXXFLAGS= -Xg -O2 -KPIC -O -Wall
+# CPPFLAGS = 
+# CFLAGS= -Kopenmp -Xg  -O2 -KPIC -O -Wall
+# FCFLAGS= -Kopenmp -Xg  -O2 -KPIC -O 
+# CXXFLAGS= -Kopenmp -Xg  -O2 -KPIC -O -Wall
+# 
+# LDFLAGS = -Kopenmp 
 
-LDFLAGS = -fopenmp
-# LDFLAGS = -Wl,-rpath,/opt/klocal/lib -Wl,-rpath,/opt/klocal/lib \
-# -L/opt/klocal/lib  -lpetsc -SCALAPACK -SSL2 -lpthread -ltrtmetcpp \
-# -Wl,-rpath,/opt/FJSVpxtof/sparc64fx/lib64 -L/opt/FJSVpxtof/sparc64fx/lib64 \
-# -Wl,-rpath,/opt/FJSVtclang/GM-1.2.0-15/lib64 -L/opt/FJSVtclang/GM-1.2.0-15/lib64 \
-# -Wl,-rpath,//opt/FJSVtclang/GM-1.2.0-15/lib64 -L//opt/FJSVtclang/GM-1.2.0-15/lib64 \
-# -Wl,-rpath,/opt/FJSVxosmmm/lib64 -L/opt/FJSVxosmmm/lib64 \
-# -lmpi_cxx -lfjdemgl -lstd_mt -lpthread -lstdc++ -ltrtmetcpp -lmpi_cxx -lfjdemgl -lstd_mt \
-# -lpthread -lstdc++ -ltrtmet -ltrtmet_c -ldl -lmpi -ltofucom -ltofutop -lnsl -lutil -ltrtfdb \
-# -lfjrtcl -ltrtth -lmpg -lmpgpthread -lpapi -lrt -lelf -lgcc_s -ldl
+##########tsubame2.5
+#CC = /usr/apps.sp3/mpi/openmpi/1.6.5/i2013.1.046/bin/mpicc
+#CXX= /usr/apps.sp3/mpi/openmpi/1.6.5/i2013.1.046/bin/mpic++ 
+#FC=  mpif90
+#CPPFLAGS = -I/usr/apps.sp3/mpi/openmpi/1.6.5/p14.6/include 
+##CFLAGS=    -mkl=sequential -fPIC 
+#CFLAGS=     
+#FCFLAGS=    
+#CXXFLAGS=   -Wall
+##LDFLAGS =  -lmkl_lapack95_lp64 -L/usr/apps.sp3/isv/intel/xe2013.1.046/composer_xe_2013_sp1.2.144/mkl/lib/intel64 -lm -lrt -Wl -lnuma
+#LDFLAGS =  -lm -lrt 
 
-# LDFLAGS = -Wl,-rpath,/opt/klocal/lib -Wl,-rpath,/opt/klocal/lib \
-# -L/opt/klocal/lib  -lpetsc -SCALAPACK -SSL2 -lpthread -ltrtmetcpp \
-# -Wl,-rpath,/opt/FJSVpxtof/sparc64fx/lib64 -L/opt/FJSVpxtof/sparc64fx/lib64 \
-# -Wl,-rpath,/opt/FJSVxosmmm/lib64 -L/opt/FJSVxosmmm/lib64 \
-# -lmpi_cxx -lfjdemgl -lstd_mt -lpthread -lstdc++ -ltrtmetcpp -lmpi_cxx -lfjdemgl -lstd_mt \
-# -lpthread -lstdc++ -ltrtmet -ltrtmet_c -ldl -lmpi -ltofucom -ltofutop -lnsl -lutil -ltrtfdb \
-# -lfjrtcl -ltrtth -lmpg -lmpgpthread -lpapi -lrt -lelf -lgcc_s -ldl
+##########tsubame2.5 PGI OpenACC
+CC = /usr/apps.sp3/mpi/openmpi/1.8.2/p15.7_cuda7.0/bin/mpicc 
+CXX= /usr/apps.sp3/mpi/openmpi/1.8.2/p15.7_cuda7.0/bin/mpic++ 
+FC= /usr/apps.sp3/mpi/openmpi/1.8.2/p15.7_cuda7.0/bin/mpif90 
+CPPFLAGS =  
+CFLAGS= -acc -Minfo -fast -Wall   
+FCFLAGS=    
+CXXFLAGS=   -acc -Minfo -fast -Wall
+#LDFLAGS =  -lmkl_lapack95_lp64 -L/usr/apps.sp3/isv/intel/xe2013.1.046/composer_xe_2013_sp1.2.144/mkl/lib/intel64 -lm -lrt -Wl -lnuma
+LDFLAGS =   
+
+#/usr/apps.sp3/mpi/openmpi/1.6.5/i2013.1.046/bin/mpicc   -mkl=sequential  -fPIC  -lmkl_lapack95_lp64 -lpapi -L/usr/apps.sp3/free/papi/4.2.1/lib CMakeFiles/tsqr.dir/common.c.o CMakeFiles/tsqr.dir/tsqr.c.o CMakeFiles/tsqr.dir/tsqrAllReduction.c.o  -o tsqr -rdynamic /usr/apps.sp3/mpi/openmpi/1.6.5/i2013.1.046/lib/libmpi_cxx.so /usr/apps.sp3/mpi/openmpi/1.6.5/i2013.1.046/lib/libmpi.so -losmcomp -lrdmacm -libverbs -lsctp -lrt -lnsl -lutil -lesmtp -ldl -lm -lnuma -lrt -lnsl -lutil -lesmtp -ldl -lm -lnuma -Wl,-rpath,/usr/apps.sp3/mpi/openmpi/1.6.5/i2013.1.046/lib 
+
 
 program_NAME := campk
 program_C_SRCS := $(wildcard ./src/*.c)
@@ -66,7 +73,7 @@ program_OBJS := $(program_C_OBJS) $(program_CXX_OBJS)
 all: $(program_NAME)
 
 $(program_NAME): $(program_OBJS)
-	$(CXX) $(program_OBJS) -o $(program_NAME) $(LDFLAGS)
+	$(CXX) -acc -Minfo -fast  $(program_OBJS) -o $(program_NAME) $(LDFLAGS)
 
 clean:
 	@- $(RM) $(program_NAME)
