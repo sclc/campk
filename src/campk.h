@@ -87,6 +87,12 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
 				 , double * remoteValResultRecoderZone, std::vector< std::map <int,long> > levelPatternRemoteVals
 				 , long offsetRemoteValCounter[], long offsetRemoteVal[] 
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
+
+void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
+				 , double * remoteValResultRecoderZone, std::vector< std::map <int,long> > levelPatternRemoteVals
+				 , long offsetRemoteValCounter[], long offsetRemoteVal[] 
+                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
 #ifdef	__cplusplus
 }
 #endif
@@ -106,4 +112,9 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
 // #define CAMPK_PROF_AFTER_COMM_COMPUT_FUNC_V2_DUP_CHECK
 
 //#define PRINT_DEPENDENCY_RECODER
+
+//#define DB_OMP_THREAD_NUM_1
+//#define DB_OMP_THREAD_NUM_2
+//#define DB_OMP_THREAD_NUM_3
+//#define DB_OMP_THREAD_NUM_4
 

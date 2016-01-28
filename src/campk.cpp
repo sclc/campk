@@ -395,7 +395,8 @@ void campk_v2(denseType X, denseType &AkX , int kval
 // levelPatternRemoteVals can be reused in solver
 //  level val is int
 // must use BFS_3
-    std::vector< std::map <int,long> > levelPatternRemoteVals(kval);
+    //std::vector< std::map <int,long> > levelPatternRemoteVals(kval);
+    std::vector< std::map <int,long> > levelPatternRemoteVals(kval-1);
     long allRemoteValLength = 0;
     //long offsetRemoteValCounter[kval];
     long offsetRemoteValCounter[kval-1];
@@ -515,7 +516,13 @@ void campk_v2(denseType X, denseType &AkX , int kval
     // wait for communicaiton done
     // when communication finished, computate locally incomputable items
 
-    campk_after_comm_computation_v5 (compactedCSR, k_level_result, k_level_locally_computable_flags 
+//    campk_after_comm_computation_v5 (compactedCSR, k_level_result, k_level_locally_computable_flags 
+//                                 ,vec_result_length, myNumRow, myRowStart, myRowEnd, vec_remote_recv_idx 
+//				 ,remoteValResultRecoderZone, levelPatternRemoteVals
+// 				 ,offsetRemoteValCounter, offsetRemoteVal
+//                                 ,buffer_vec_remote_recv, numRemoteVec, kval, myid, numprocs);
+//
+    campk_after_comm_computation_v6 (compactedCSR, k_level_result, k_level_locally_computable_flags 
                                  ,vec_result_length, myNumRow, myRowStart, myRowEnd, vec_remote_recv_idx 
 				 ,remoteValResultRecoderZone, levelPatternRemoteVals
  				 ,offsetRemoteValCounter, offsetRemoteVal
@@ -1252,7 +1259,6 @@ int campk_comm_overlaping_local_computation_v1 (csrType_local_var compactedCSR, 
     return numRemoteVec;
 }
 ///////////////////////////////////
-
 int campk_comm_overlaping_local_computation_v2 (csrType_local_var compactedCSR, std::map<long, std::vector<int> > dependencyRecoder 
                                                , double *& buffer_vec_remote_recv, short  *k_level_locally_computable_flags 
                                                , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd 
@@ -1454,9 +1460,6 @@ void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_
 #endif
 
     long locally_incomputable_col_idx;
-    long remoteEleStartIdx, remoteEleEndIdx;
-    long remoteEleIdx;
-    long remoteLocallyComputableColIdx;
     std::map<long, std::vector<double> > remoteValResultRecoder;
 
     long idx;
@@ -1555,9 +1558,6 @@ void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_
     int ierr;
 #endif
     long locally_incomputable_col_idx;
-    long remoteEleStartIdx, remoteEleEndIdx;
-    long remoteEleIdx;
-    long remoteLocallyComputableColIdx;
     // std::map<long, std::vector<double> > remoteValResultRecoder;
 
     double * remoteValResultRecoderZone = (double *)malloc( compactedCSR.num_cols *(kval-1)*sizeof(double) );
@@ -1659,9 +1659,6 @@ void campk_after_comm_computation_v3 (csrType_local_var compactedCSR, double *k_
 {
 
     long locally_incomputable_col_idx;
-    long remoteEleStartIdx, remoteEleEndIdx;
-    long remoteEleIdx;
-    long remoteLocallyComputableColIdx;
 
     double * remoteValResultRecoderZone = (double *)malloc( compactedCSR.num_cols *(kval-1)*sizeof(double) );
     // set values of remoteValResultRecoderZone to be SPEC_VAL
@@ -1743,9 +1740,6 @@ void campk_after_comm_computation_v4 (csrType_local_var compactedCSR, double *k_
 {
 
     long locally_incomputable_col_idx;
-    long remoteEleStartIdx, remoteEleEndIdx;
-    long remoteEleIdx;
-    long remoteLocallyComputableColIdx;
 
     double * remoteValResultRecoderZone = (double *)malloc( compactedCSR.num_cols *(kval-1)*sizeof(double) );
     // set values of remoteValResultRecoderZone to be SPEC_VAL
@@ -1836,9 +1830,6 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
 {
 
     long locally_incomputable_col_idx;
-    long remoteEleStartIdx, remoteEleEndIdx;
-    long remoteEleIdx;
-    long remoteLocallyComputableColIdx;
     std::map <int,long> ::iterator iterator_levelPatternRemoteVals_map; 
 
     // set values of remoteValResultRecoderZone to be SPEC_VAL
@@ -1849,7 +1840,7 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
 
     long idx, valPos;
     long eleStartIdx, eleEndIdx;
-    long resPtr, myRowIdx, tempRowIdx, tempColIdx, levelIdx, remoteZoneValIdx;
+    long resPtr, myRowIdx, levelIdx;
 
     int my_level;
     int num_level_computable;
@@ -1990,4 +1981,197 @@ void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_
 
 }
 
+///////////////////////////////////////////////////
+void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
+				 , double * remoteValResultRecoderZone, std::vector< std::map <int,long> > levelPatternRemoteVals
+				 , long offsetRemoteValCounter[], long offsetRemoteVal[] 
+                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs)
+{
+
+    long locally_incomputable_col_idx;
+    std::map <int,long> ::iterator iterator_levelPatternRemoteVals_map; 
+
+    // set values of remoteValResultRecoderZone to be SPEC_VAL
+    //, and assume that if a value of remoteValResultRecoderZone has changed
+    //, it will be different from SPEC_VAL
+    //std::fill( remoteValResultRecoderZone, remoteValResultRecoderZone + offsetRemoteVal[kval], SPEC_VAL );
+    std::fill( remoteValResultRecoderZone, remoteValResultRecoderZone + offsetRemoteVal[kval-1], SPEC_VAL );
+
+    long idx, valPos;
+    long eleStartIdx, eleEndIdx;
+    long resPtr, myRowIdx, levelIdx;
+
+    int my_level;
+    int num_level_computable;
+
+    double last_result_val;
+
+    int omp_tid, omp_nthreads;
+
+    //printf ( "myid: %d, numRemoteVec: %d, offsetRemoteValCounter[0]:%ld \n", myid, numRemoteVec, offsetRemoteValCounter[0]);
+    //exit(1);
+    
+    assert ( numRemoteVec == offsetRemoteValCounter[0]);
+
+    for (idx=0; idx< offsetRemoteValCounter[0] ;idx++)
+    {
+	valPos = levelPatternRemoteVals[0][ vec_remote_recv_idx[idx] ]; 
+        remoteValResultRecoderZone[ valPos ] = buffer_vec_remote_recv[idx];
+    }
+
+
+    //for (levelIdx = 1; levelIdx<kval; levelIdx++)
+    for (levelIdx = 1; levelIdx<kval-1; levelIdx++) 
+    {
+	long thisLevelLocalResStart = levelIdx*myNumRow;
+	long thisLevelLocalResEnd   = thisLevelLocalResStart + myNumRow;
+	my_level = levelIdx;
+
+//compute local computable on this level
+	for (resPtr = thisLevelLocalResStart; resPtr< thisLevelLocalResEnd; resPtr++)
+	{
+		num_level_computable =  (int)k_level_locally_computable_flags[resPtr];		
+
+		if (num_level_computable != my_level)
+		{
+		    myRowIdx = (resPtr%myNumRow) + myRowStart;
+		    eleStartIdx = compactedCSR.row_start[myRowIdx];
+		    eleEndIdx   = compactedCSR.row_end[myRowIdx];
+		
+		    for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+		    {
+		        locally_incomputable_col_idx = compactedCSR.col_idx[idx];
+				
+		        if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
+		        {
+		            last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+		                                        locally_incomputable_col_idx - 
+		                                        myRowStart];
+		            k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+			    continue;
+		        }
+		
+			valPos = levelPatternRemoteVals[my_level-1][ locally_incomputable_col_idx ];
+			last_result_val = remoteValResultRecoderZone[valPos];
+			assert (last_result_val != SPEC_VAL);
+		        k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+		    }
+		}
+		else 
+		{
+		    continue;
+		}
+	}
+     
+     //compute remote computable on this level 
+	for ( iterator_levelPatternRemoteVals_map = levelPatternRemoteVals[my_level].begin(); 
+		iterator_levelPatternRemoteVals_map != levelPatternRemoteVals[my_level].end(); 
+		++iterator_levelPatternRemoteVals_map )
+	{
+		long remoteValRowIdx = (long) iterator_levelPatternRemoteVals_map->first;
+		long remoteValPos    = iterator_levelPatternRemoteVals_map->second; 
+
+		assert ( remoteValResultRecoderZone[remoteValPos] == SPEC_VAL );
+
+		remoteValResultRecoderZone[remoteValPos] = 0.0;
+
+		eleStartIdx = compactedCSR.row_start[remoteValRowIdx];
+		eleEndIdx   = compactedCSR.row_end[remoteValRowIdx];
+		
+		for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+		{
+		    locally_incomputable_col_idx = compactedCSR.col_idx[idx];
+		    	
+		    if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
+		    {
+		        last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+		                                    locally_incomputable_col_idx - 
+		                                    myRowStart];
+		        remoteValResultRecoderZone[remoteValPos] += compactedCSR.csrdata[idx] * last_result_val;
+		        continue;
+		    }
+		
+		    valPos = levelPatternRemoteVals[my_level-1][ locally_incomputable_col_idx ];
+		    last_result_val = remoteValResultRecoderZone[valPos];
+		    assert (last_result_val != SPEC_VAL);
+		    remoteValResultRecoderZone[remoteValPos] += compactedCSR.csrdata[idx] * last_result_val;
+		}
+	}
+
+    }
+
+    // compute kval level local value 
+	long thisLevelLocalResStart = (kval - 1)*myNumRow;
+	long thisLevelLocalResEnd   = thisLevelLocalResStart + myNumRow;
+	my_level = kval-1;
+
+#pragma omp parallel private(omp_tid) 
+{ /*OMP start*/
+#ifdef DB_OMP_THREAD_NUM_1
+	omp_tid = omp_get_thread_num();
+	printf ("hw from process:%d, thread:%d\n", myid, omp_tid);
+
+	omp_nthreads = omp_get_num_threads();
+	if (omp_tid == 0)
+	{
+		printf (" process:%d has %d threads\n ", myid, omp_nthreads);
+	}
+	
+	#pragma omp barrier	
+	//exit (1);
+#endif
+
+#ifdef DB_OMP_THREAD_NUM_2
+#pragma omp for private (resPtr)
+#endif
+
+#ifdef DB_OMP_THREAD_NUM_4
+#pragma omp for private (resPtr, idx, num_level_computable, myRowIdx, eleStartIdx, eleEndIdx, locally_incomputable_col_idx, last_result_val) collapse (2)
+//#pragma omp for collapse (2)
+#endif
+	for (resPtr = thisLevelLocalResStart; resPtr< thisLevelLocalResEnd; resPtr++)
+	{
+		num_level_computable =  (int)k_level_locally_computable_flags[resPtr];		
+	
+		if (num_level_computable != my_level)
+		{
+		    myRowIdx = (resPtr%myNumRow) + myRowStart;
+		    eleStartIdx = compactedCSR.row_start[myRowIdx];
+		    eleEndIdx   = compactedCSR.row_end[myRowIdx];
+		
+#ifdef DB_OMP_THREAD_NUM_3
+//#pragma omp for private (idx)
+#pragma omp for 
+#endif
+		    for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+		    {
+		        locally_incomputable_col_idx = compactedCSR.col_idx[idx];
+		        	
+		        if (locally_incomputable_col_idx >= myRowStart && locally_incomputable_col_idx<= myRowEnd)
+		        {
+		            last_result_val = k_level_result[ (my_level - 1)* myNumRow   + 
+		                                        locally_incomputable_col_idx - 
+		                                        myRowStart];
+		        #pragma omp atomic
+		            k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+		            continue;
+		        }
+		
+		        valPos = levelPatternRemoteVals[my_level-1][ locally_incomputable_col_idx ];
+		        last_result_val = remoteValResultRecoderZone[valPos];
+		        assert (last_result_val != SPEC_VAL);
+		        #pragma omp atomic
+		        k_level_result[resPtr] += compactedCSR.csrdata[idx] * last_result_val;
+		    }
+		}
+		else 
+		{
+		    continue;
+		}
+	}
+
+} /* OMP End*/
+
+}
 ///////////////////////////////////////
