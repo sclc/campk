@@ -1,11 +1,12 @@
 echo "run  . set_ompi-1.8.2_p15.7_cuda7.0.sh"
 ########at52
-#CC = mpicc
+#CC = 
 #CXX= mpic++ 
-# FC="mpifrtpx" 
+#FC="mpifrtpx" 
 #CPPFLAGS = 
-#CFLAGS= -O -Wall
-#CXXFLAGS= -O -O2 -Wall 
+#CFLAGS= -acc -Minfo -fast -Wall   
+#FCFLAGS=    
+#CXXFLAGS=   -acc -Minfo -fast -Wall
 ########k-computer
 # CC = mpifccpx
 # CXX= mpiFCCpx 
