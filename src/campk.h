@@ -32,10 +32,6 @@ extern "C" {
 void Sparse_Csr_Matrix_Distribution_kLevel_net_v1(csrType_local * localMat, int k, matInfo * mat_info \
                                   , int myid, int numprocs,char* path, char* mtx_filename);
 
-void campk_v1(denseType X, denseType &AkX , int kval \
-	             , matInfo * mat_info, int myid, int numprocs \
-	             , char* path, char* mtx_filename);
-
 void campk_v2(denseType X, denseType &AkX , int kval \
 	             , matInfo * mat_info, int myid, int numprocs \
 	             , char* path, char* mtx_filename);
@@ -66,29 +62,14 @@ int campk_comm_overlaping_local_computation_v2 (csrType_local_var compactedCSR, 
                                                , double *k_level_result, long vec_result_length, long myNumRow, long myRowStart, long myRowEnd \
                                                , long averageNumRowPerProc, long *& vec_remote_recv_idx, int myid, int numprocs);
 
-void campk_after_comm_computation_v1 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags \
-                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx \
-                                 , double * buffer_vec_remote_recv, int numRemoteVec, int myid, int numprocs);
 
-void campk_after_comm_computation_v2 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
-                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
-                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
-
-void campk_after_comm_computation_v3 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
-                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
-                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
-
-void campk_after_comm_computation_v4 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
-                                 , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
-                                 , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
-
-void campk_after_comm_computation_v5 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+void campk_after_comm_computation_original (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
                                  , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
 				 , double * remoteValResultRecoderZone, std::vector< std::map <int,long> > levelPatternRemoteVals
 				 , long offsetRemoteValCounter[], long offsetRemoteVal[] 
                                  , double * buffer_vec_remote_recv, int numRemoteVec, int kval, int myid, int numprocs);
 
-void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
+void campk_after_comm_computation_openacc_v1 (csrType_local_var compactedCSR, double *k_level_result, short  *k_level_locally_computable_flags 
                                  , long vec_result_length, long myNumRow, long myRowStart, long myRowEnd,long *vec_remote_recv_idx 
 				 , double * remoteValResultRecoderZone, std::vector< std::map <int,long> > levelPatternRemoteVals
 				 , long offsetRemoteValCounter[], long offsetRemoteVal[] 
@@ -113,8 +94,6 @@ void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_
 
 //#define PRINT_DEPENDENCY_RECODER
 
-//#define DB_OMP_THREAD_NUM_1
-//#define DB_OMP_THREAD_NUM_2
-//#define DB_OMP_THREAD_NUM_3
-//#define DB_OMP_THREAD_NUM_4
+//#define DB_OPACC__1
+#define DB_OPACC__2
 
