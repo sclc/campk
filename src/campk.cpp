@@ -2106,29 +2106,30 @@ void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_
 	long thisLevelLocalResEnd   = thisLevelLocalResStart + myNumRow;
 	my_level = kval-1;
 
-#pragma omp parallel private(omp_tid) 
-{ /*OMP start*/
-#ifdef DB_OMP_THREAD_NUM_1
-	omp_tid = omp_get_thread_num();
-	printf ("hw from process:%d, thread:%d\n", myid, omp_tid);
+//#pragma omp parallel private(omp_tid) 
+//{ /*OMP start*/
+//#ifdef DB_OMP_THREAD_NUM_1
+//	omp_tid = omp_get_thread_num();
+//	printf ("hw from process:%d, thread:%d\n", myid, omp_tid);
+//
+//	omp_nthreads = omp_get_num_threads();
+//	if (omp_tid == 0)
+//	{
+//		printf (" process:%d has %d threads\n ", myid, omp_nthreads);
+//	}
+//	
+//	#pragma omp barrier	
+//	//exit (1);
+//#endif
 
-	omp_nthreads = omp_get_num_threads();
-	if (omp_tid == 0)
-	{
-		printf (" process:%d has %d threads\n ", myid, omp_nthreads);
-	}
-	
-	#pragma omp barrier	
-	//exit (1);
-#endif
-
-#ifdef DB_OMP_THREAD_NUM_2
-#pragma omp for private (resPtr)
-#endif
+//#ifdef DB_OMP_THREAD_NUM_2
+//#pragma omp for private (resPtr)
+//#endif
 
 #ifdef DB_OMP_THREAD_NUM_4
-#pragma omp for private (resPtr, idx, num_level_computable, myRowIdx, eleStartIdx, eleEndIdx, locally_incomputable_col_idx, last_result_val) collapse (2)
-//#pragma omp for collapse (2)
+//#pragma omp for private (resPtr, idx, num_level_computable, myRowIdx, eleStartIdx, eleEndIdx, locally_incomputable_col_idx, last_result_val) collapse (2)
+//#pragma omp for private (resPtr, idx, num_level_computable, myRowIdx, eleStartIdx, eleEndIdx, locally_incomputable_col_idx, last_result_val) 
+#pragma omp parallel for private (resPtr,idx) 
 #endif
 	for (resPtr = thisLevelLocalResStart; resPtr< thisLevelLocalResEnd; resPtr++)
 	{
@@ -2141,10 +2142,10 @@ void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_
 		    eleEndIdx   = compactedCSR.row_end[myRowIdx];
 		
 #ifdef DB_OMP_THREAD_NUM_3
-//#pragma omp for private (idx)
-#pragma omp for 
+#pragma omp parallel for schedule (static, 3000) 
 #endif
 		    for (idx = eleStartIdx; idx<= eleEndIdx; idx++)
+		    //for (idx = compactedCSR.row_start[myRowIdx]; idx<= compactedCSR.row_end[myRowIdx]; idx++)
 		    {
 		        locally_incomputable_col_idx = compactedCSR.col_idx[idx];
 		        	
@@ -2171,7 +2172,7 @@ void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_
 		}
 	}
 
-} /* OMP End*/
+//} /* OMP End*/
 
 }
 ///////////////////////////////////////

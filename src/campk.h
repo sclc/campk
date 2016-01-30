@@ -115,6 +115,6 @@ void campk_after_comm_computation_v6 (csrType_local_var compactedCSR, double *k_
 
 //#define DB_OMP_THREAD_NUM_1
 //#define DB_OMP_THREAD_NUM_2
-//#define DB_OMP_THREAD_NUM_3
-//#define DB_OMP_THREAD_NUM_4
+#define DB_OMP_THREAD_NUM_3
+#define DB_OMP_THREAD_NUM_4
 
