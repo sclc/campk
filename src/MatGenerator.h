@@ -8,6 +8,7 @@
 #endif
 
 #include "DataTypes.h"
+#include <ctime>
 
 #define ITEMS_PER_ROW_LOWER_BOUND 1
 // SPARSITY_RATIO<=1.0
