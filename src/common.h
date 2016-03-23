@@ -78,6 +78,8 @@ void DenseMatrixComparsion (denseType mat1, denseType mat2);
 
 void DenseMatrixComparsion_update1 (denseType mat1, denseType mat2);
 
+void DenseMatrixComparsion_update2 (denseType mat1, denseType mat2, double maxRelativeError, double maxAbsoulteError);
+
 void ClearQueue (std::queue<long> &rowIdxScanQueue);
 
 void RecurisiveCallOverheadProfiling (int level);

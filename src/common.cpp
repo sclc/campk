@@ -446,6 +446,32 @@ void DenseMatrixComparsion_update1 (denseType mat1, denseType mat2)
     }
 }
 
+void DenseMatrixComparsion_update2 (denseType mat1, denseType mat2, double maxRelativeError, double maxAbsoulteError)
+{
+    long length = mat1.local_num_row * mat1.local_num_col;
+    assert (mat1.local_num_row == mat2.local_num_row);
+    assert (mat1.local_num_col == mat2.local_num_col);
+
+    long idx;
+    
+
+    for  (idx=0; idx<length; idx++)
+    {
+	if ( fabs(mat1.data[idx] - mat2.data[idx]) < maxAbsoulteError ) continue;
+
+	double relativeError;
+	relativeError = ( fabs(mat1.data[idx]) > fabs(mat2.data[idx]) ) 
+			? fabs( (mat1.data[idx] - mat2.data[idx]) / mat1.data[idx] ) 
+			: fabs( (mat1.data[idx] - mat2.data[idx]) / mat2.data[idx] );
+	
+        if (relativeError > maxRelativeError  )
+        {
+            printf ("idx:%ld, relativeError:%lf, maxRelativeError:%lf, mat1: %lf, mat2: %lf difference: %lf\n", 
+			idx, relativeError, maxRelativeError, 
+			mat1.data[idx], mat2.data[idx], mat1.data[idx]-mat2.data[idx]);
+        }
+    }
+}
 void ClearQueue (std::queue<long> &rowIdxScanQueue)
 {
     std::queue<long> empty;
