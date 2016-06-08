@@ -141,9 +141,13 @@ int main(int argc, char* argv[]) {
     printf ("myid: %d. campk_v1 done\n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif /*DB_COMPARAE_RES_1*/
+	double maxAbsoulteError = 1.0;
+	while (maxAbsoulteError != 0.0) maxAbsoulteError /= 2.0;
+   	double maxRelativeError = 1e-8;
     
     //DenseMatrixComparsion (AkX, AkX_compartor);
-    DenseMatrixComparsion_update1 (AkX, AkX_compartor);
+    //DenseMatrixComparsion_update1 (AkX, AkX_compartor);
+    DenseMatrixComparsion_update2 (AkX, AkX_compartor, maxRelativeError, maxAbsoulteError);
     printf ("myid: %d. passed \n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 
@@ -224,9 +228,9 @@ int main(int argc, char* argv[]) {
     printf ("myid: %d. campk_v1 done\n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 #endif /*DB_COMPARAE_RES_1*/
-    
     //DenseMatrixComparsion (AkX, AkX_compartor);
-    DenseMatrixComparsion_update1 (AkX, AkX_compartor);
+    //DenseMatrixComparsion_update1 (AkX, AkX_compartor);
+    DenseMatrixComparsion_update2 (AkX, Akx_compartor, maxRelativeError, maxAbsoulteError);
     printf ("myid: %d. passed \n", myid);
     ierr = MPI_Barrier(MPI_COMM_WORLD);
 

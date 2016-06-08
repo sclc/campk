@@ -12,9 +12,9 @@ CC = mpifccpx
 CXX= mpiFCCpx 
 FC="mpifrtpx" 
 CPPFLAGS = 
-CFLAGS= -Kopenmp -Xg  -O2 -KPIC -O -Wall
-FCFLAGS= -Kopenmp -Xg  -O2 -KPIC -O 
-CXXFLAGS= -Kopenmp -Xg  -O2 -KPIC -O -Wall
+CFLAGS= -Kfast,openmp,PIC -Xg  -O2 -O -Wall
+FCFLAGS= -Kfast,openmp,PIC -Xg  -O2 -O 
+CXXFLAGS= -Kfast,openmp,PIC -Xg  -O2 -O -Wall
 
 LDFLAGS = -Kopenmp 
 # LDFLAGS = -Wl,-rpath,/opt/klocal/lib -Wl,-rpath,/opt/klocal/lib \
